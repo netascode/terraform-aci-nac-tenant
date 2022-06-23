@@ -151,7 +151,7 @@ locals {
         }]
       }]
     }]
-  } if lookup(l3out, "nodes", []) != []]
+  } if length(lookup(l3out, "nodes", [])) != 0]
 
   interface_profiles_manual = flatten([for l3out in lookup(local.tenant, "l3outs", []) : [
     for np in lookup(l3out, "node_profiles", []) : [
@@ -238,7 +238,7 @@ locals {
         }]
       }
     ]])
-  } if lookup(l3out, "nodes", []) != []]
+  } if length(lookup(l3out, "nodes", [])) != 0]
 
   external_endpoint_groups = flatten([for l3out in lookup(local.tenant, "l3outs", []) : [
     for epg in lookup(l3out, "external_endpoint_groups", []) : {
@@ -929,9 +929,9 @@ module "aci_service_graph_template" {
   share_encapsulation = lookup(each.value, "share_encapsulation", local.defaults.apic.tenants.services.service_graph_templates.share_encapsulation)
   device_name         = "${each.value.device.name}${local.defaults.apic.tenants.services.l4l7_devices.name_suffix}"
   device_tenant       = lookup(each.value.device, "tenant", null)
-  device_function     = local.l4l7_devices != [] ? [for device in local.l4l7_devices : lookup(device, "function", []) if device.name == each.value.device.name][0] : "None"
-  device_copy         = (local.l4l7_devices != [] ? [for device in local.l4l7_devices : lookup(device, "copy_device", []) if device.name == each.value.device.name][0] : false)
-  device_managed      = (local.l4l7_devices != [] ? [for device in local.l4l7_devices : lookup(device, "managed", []) if device.name == each.value.device.name][0] : false)
+  device_function     = length(local.l4l7_devices) != 0 ? [for device in local.l4l7_devices : lookup(device, "function", []) if device.name == each.value.device.name][0] : "None"
+  device_copy         = (length(local.l4l7_devices) != 0 ? [for device in local.l4l7_devices : lookup(device, "copy_device", []) if device.name == each.value.device.name][0] : false)
+  device_managed      = (length(local.l4l7_devices) != 0 ? [for device in local.l4l7_devices : lookup(device, "managed", []) if device.name == each.value.device.name][0] : false)
 
   depends_on = [
     module.aci_l4l7_device,
@@ -946,8 +946,8 @@ module "aci_device_selection_policy" {
   tenant                                                  = module.aci_tenant[0].name
   contract                                                = "${each.value.contract}${local.defaults.apic.tenants.contracts.name_suffix}"
   service_graph_template                                  = "${each.value.service_graph_template}${local.defaults.apic.tenants.services.service_graph_templates.name_suffix}"
-  sgt_device_tenant                                       = lookup(lookup(local.tenant, "services", {}), "service_graph_templates", []) != [] ? [for sg_template in lookup(lookup(local.tenant, "services", {}), "service_graph_templates", []) : lookup(sg_template.device, "tenant", null) if sg_template.name == each.value.service_graph_template][0] : ""
-  sgt_device_name                                         = lookup(lookup(local.tenant, "services", {}), "service_graph_templates", []) != [] ? [for sg_template in lookup(lookup(local.tenant, "services", {}), "service_graph_templates", []) : "${sg_template.device.name}${local.defaults.apic.tenants.services.l4l7_devices.name_suffix}" if sg_template.name == each.value.service_graph_template][0] : ""
+  sgt_device_tenant                                       = length(lookup(lookup(local.tenant, "services", {}), "service_graph_templates", [])) != 0 ? [for sg_template in lookup(lookup(local.tenant, "services", {}), "service_graph_templates", []) : lookup(sg_template.device, "tenant", null) if sg_template.name == each.value.service_graph_template][0] : ""
+  sgt_device_name                                         = length(lookup(lookup(local.tenant, "services", {}), "service_graph_templates", [])) != 0 ? [for sg_template in lookup(lookup(local.tenant, "services", {}), "service_graph_templates", []) : "${sg_template.device.name}${local.defaults.apic.tenants.services.l4l7_devices.name_suffix}" if sg_template.name == each.value.service_graph_template][0] : ""
   consumer_l3_destination                                 = lookup(each.value.consumer, "l3_destination", local.defaults.apic.tenants.services.device_selection_policies.consumer.l3_destination)
   consumer_permit_logging                                 = lookup(each.value.consumer, "permit_logging", local.defaults.apic.tenants.services.device_selection_policies.consumer.permit_logging)
   consumer_logical_interface                              = "${each.value.consumer.logical_interface}${local.defaults.apic.tenants.services.l4l7_devices.logical_interfaces.name_suffix}"

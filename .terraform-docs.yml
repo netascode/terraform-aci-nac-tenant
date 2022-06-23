@@ -1,0 +1,17 @@
+version: '>= 0.14.0'
+
+formatter: markdown table
+
+content: |-
+  [![Tests](https://github.com/netascode/terraform-aci-nac-tenant/actions/workflows/test.yml/badge.svg)](https://github.com/netascode/terraform-aci-nac-tenant/actions/workflows/test.yml)
+
+  # Terraform ACI Tenant Module
+
+  A Terraform module to configure an ACI Tenant.
+
+output:
+  file: README.md
+  mode: replace
+
+sort:
+  enabled: false

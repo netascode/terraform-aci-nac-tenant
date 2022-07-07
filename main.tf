@@ -75,11 +75,25 @@ locals {
   ])
 
   l3outs = [for l3out in lookup(local.tenant, "l3outs", []) : {
-    name                         = "${l3out.name}${local.defaults.apic.tenants.l3outs.name_suffix}"
-    alias                        = lookup(l3out, "alias", "")
-    description                  = lookup(l3out, "description", "")
-    domain                       = "${l3out.domain}${local.defaults.apic.access_policies.routed_domains.name_suffix}"
-    vrf                          = "${l3out.vrf}${local.defaults.apic.tenants.vrfs.name_suffix}"
+    name        = "${l3out.name}${local.defaults.apic.tenants.l3outs.name_suffix}"
+    alias       = lookup(l3out, "alias", "")
+    description = lookup(l3out, "description", "")
+    domain      = "${l3out.domain}${local.defaults.apic.access_policies.routed_domains.name_suffix}"
+    vrf         = "${l3out.vrf}${local.defaults.apic.tenants.vrfs.name_suffix}"
+    bgp = anytrue([
+      anytrue(
+        flatten([for np in lookup(l3out, "node_profiles", []) : [
+          for ip in lookup(np, "interface_profiles", []) : [
+            for int in lookup(ip, "interfaces", []) : lookup(int, "bgp_peers", null) != null
+          ]
+        ]])
+      ),
+      anytrue(
+        flatten([for node in lookup(l3out, "nodes", []) : [
+          for int in lookup(node, "interfaces", []) : lookup(int, "bgp_peers", null) != null
+        ]])
+      ),
+    ])
     ospf                         = lookup(l3out, "ospf", null) != null ? true : false
     ospf_area                    = lookup(lookup(l3out, "ospf", {}), "area", "backbone")
     ospf_area_cost               = lookup(lookup(l3out, "ospf", {}), "area_cost", local.defaults.apic.tenants.l3outs.ospf.area_cost)
@@ -500,6 +514,7 @@ module "aci_l3out" {
   description                  = each.value.description
   routed_domain                = each.value.domain
   vrf                          = each.value.vrf
+  bgp                          = each.value.bgp
   ospf                         = each.value.ospf
   ospf_area                    = each.value.ospf_area
   ospf_area_cost               = each.value.ospf_area_cost

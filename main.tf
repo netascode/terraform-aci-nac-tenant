@@ -35,9 +35,9 @@ locals {
         contract_imported_consumers = lookup(lookup(epg, "contracts", {}), "imported_consumers", null) != null ? [for contract in epg.contracts.imported_consumers : "${contract}${local.defaults.apic.tenants.imported_contracts.name_suffix}"] : []
         physical_domains            = lookup(epg, "physical_domains", null) != null ? [for domain in epg.physical_domains : "${domain}${local.defaults.apic.access_policies.physical_domains.name_suffix}"] : []
         static_ports = [for sp in lookup(epg, "static_ports", []) : {
-          node_id = lookup(sp, "node_id", try(lookup(sp, "channel", null) != null ? [for pg in local.leaf_interface_policy_group_mapping : lookup(pg, "node_ids", []) if pg.name == lookup(sp, "channel", null)][0][0] : 0, null))
+          node_id = lookup(sp, "node_id", lookup(sp, "channel", null) != null ? try([for pg in local.leaf_interface_policy_group_mapping : lookup(pg, "node_ids", []) if pg.name == lookup(sp, "channel", null)][0][0], null) : null)
           # set node2_id to "vpc" if channel IPG is vPC, otherwise "null"
-          node2_id             = lookup(sp, "node2_id", lookup(sp, "channel", null) != null ? [for pg in local.leaf_interface_policy_group_mapping : lookup(pg, "type", []) if pg.name == lookup(sp, "channel", null)][0] : null)
+          node2_id             = lookup(sp, "node2_id", lookup(sp, "channel", null) != null ? try([for pg in local.leaf_interface_policy_group_mapping : pg.type if pg.name == lookup(sp, "channel", null) && pg.type == "vpc"][0], null) : null)
           pod_id               = lookup(sp, "pod_id", null)
           channel              = lookup(sp, "channel", null) != null ? "${sp.channel}${local.defaults.apic.access_policies.leaf_interface_policy_groups.name_suffix}" : null
           port                 = lookup(sp, "port", null)
@@ -128,7 +128,7 @@ locals {
         name  = "${np.name}${local.defaults.apic.tenants.l3outs.node_profiles.name_suffix}"
         nodes = [for node in lookup(np, "nodes", []) : {
           node_id               = node.node_id
-          pod_id                = lookup(node, "pod_id", [for node_ in lookup(local.node_policies, "nodes", []) : node_.pod if node_.id == node.node_id][0])
+          pod_id                = lookup(node, "pod_id", try([for node_ in lookup(local.node_policies, "nodes", []) : node_.pod if node_.id == node.node_id][0], local.defaults.apic.tenants.l3outs.node_profiles.nodes.pod))
           router_id             = node.router_id
           router_id_as_loopback = lookup(node, "router_id_as_loopback", local.defaults.apic.tenants.l3outs.node_profiles.nodes.router_id_as_loopback)
           static_routes = [for sr in lookup(node, "static_routes", []) : {
@@ -151,7 +151,7 @@ locals {
     name  = l3out.name
     nodes = [for node in lookup(l3out, "nodes", []) : {
       node_id               = node.node_id
-      pod_id                = lookup(node, "pod_id", [for node_ in lookup(local.node_policies, "nodes", []) : node_.pod if node_.id == node.node_id][0])
+      pod_id                = lookup(node, "pod_id", try([for node_ in lookup(local.node_policies, "nodes", []) : node_.pod if node_.id == node.node_id][0], local.defaults.apic.tenants.l3outs.nodes.pod))
       router_id             = node.router_id
       router_id_as_loopback = lookup(node, "router_id_as_loopback", local.defaults.apic.tenants.l3outs.nodes.router_id_as_loopback)
       static_routes = [for sr in lookup(node, "static_routes", []) : {
@@ -186,11 +186,11 @@ locals {
             svi         = lookup(int, "svi", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.svi)
             vlan        = lookup(int, "vlan", null)
             description = lookup(int, "description", "")
-            type        = lookup(int, "port", null) != null ? "access" : ([for pg in local.leaf_interface_policy_group_mapping : lookup(pg, "type", []) if pg.name == lookup(int, "channel", null)][0])
+            type        = lookup(int, "port", null) != null ? "access" : ([for pg in local.leaf_interface_policy_group_mapping : pg.type if pg.name == lookup(int, "channel", null)][0])
             mac         = lookup(int, "mac", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.mac)
             mtu         = lookup(int, "mtu", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.mtu)
-            node_id     = lookup(int, "node_id", try(lookup(int, "channel", null) != null ? [for pg in local.leaf_interface_policy_group_mapping : lookup(pg, "node_ids", []) if pg.name == lookup(int, "channel", null)][0][0] : 0, null))
-            node2_id    = lookup(int, "node2_id", lookup(int, "channel", null) != null ? [for pg in local.leaf_interface_policy_group_mapping : lookup(pg, "type", []) if pg.name == lookup(int, "channel", null)][0] : null)
+            node_id     = lookup(int, "node_id", lookup(int, "channel", null) != null ? try([for pg in local.leaf_interface_policy_group_mapping : lookup(pg, "node_ids", []) if pg.name == lookup(int, "channel", null)][0][0], null) : null)
+            node2_id    = lookup(int, "node2_id", lookup(int, "channel", null) != null ? try([for pg in local.leaf_interface_policy_group_mapping : pg.type if pg.name == lookup(int, "channel", null) && pg.type == "vpc"][0], null) : null)
             pod_id      = lookup(int, "pod_id", null)
             module      = lookup(int, "module", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.module)
             port        = lookup(int, "port", null)
@@ -229,11 +229,11 @@ locals {
         svi         = lookup(int, "svi", local.defaults.apic.tenants.l3outs.nodes.interfaces.svi)
         vlan        = lookup(int, "vlan", null)
         description = lookup(int, "description", "")
-        type        = lookup(int, "port", null) != null ? "access" : ([for pg in local.leaf_interface_policy_group_mapping : lookup(pg, "type", []) if pg.name == lookup(int, "channel", null)][0])
+        type        = lookup(int, "port", null) != null ? "access" : ([for pg in local.leaf_interface_policy_group_mapping : pg.type if pg.name == lookup(int, "channel", null)][0])
         mac         = lookup(int, "mac", local.defaults.apic.tenants.l3outs.nodes.interfaces.mac)
         mtu         = lookup(int, "mtu", local.defaults.apic.tenants.l3outs.nodes.interfaces.mtu)
-        node_id     = lookup(node, "node_id", try(lookup(int, "channel", null) != null ? [for pg in local.leaf_interface_policy_group_mapping : lookup(pg, "node_ids", []) if pg.name == lookup(int, "channel", null)][0][0] : 0, null))
-        node2_id    = lookup(int, "node2_id", lookup(int, "channel", null) != null ? [for pg in local.leaf_interface_policy_group_mapping : lookup(pg, "type", []) if pg.name == lookup(int, "channel", null)][0] : null)
+        node_id     = lookup(node, "node_id", lookup(int, "channel", null) != null ? try([for pg in local.leaf_interface_policy_group_mapping : lookup(pg, "node_ids", []) if pg.name == lookup(int, "channel", null)][0][0], null) : null)
+        node2_id    = lookup(int, "node2_id", lookup(int, "channel", null) != null ? try([for pg in local.leaf_interface_policy_group_mapping : pg.type if pg.name == lookup(int, "channel", null) && pg.type == "vpc"][0], null) : null)
         pod_id      = lookup(int, "pod_id", null)
         module      = lookup(int, "module", local.defaults.apic.tenants.l3outs.nodes.interfaces.module)
         port        = lookup(int, "port", null)
@@ -302,10 +302,10 @@ locals {
         name      = "${int.name}${local.defaults.apic.tenants.services.l4l7_devices.concrete_devices.interfaces.name_suffix}"
         alias     = lookup(int, "alias", null)
         vnic_name = lookup(int, "vnic_name", null)
-        node_id   = lookup(int, "node_id", try(lookup(int, "channel", null) != null ? [for pg in local.leaf_interface_policy_group_mapping : lookup(pg, "node_ids", []) if pg.name == lookup(int, "channel", null)][0][0] : 0, null))
+        node_id   = lookup(int, "node_id", lookup(int, "channel", null) != null ? try([for pg in local.leaf_interface_policy_group_mapping : lookup(pg, "node_ids", []) if pg.name == lookup(int, "channel", null)][0][0], null) : null)
         # set node2_id to "vpc" if channel IPG is vPC, otherwise "null"
-        node2_id = lookup(int, "node2_id", lookup(int, "channel", null) != null ? [for pg in local.leaf_interface_policy_group_mapping : lookup(pg, "type", []) if pg.name == lookup(int, "channel", null)][0] : null)
-        pod_id   = lookup(int, "pod_id", [for node in lookup(local.node_policies, "nodes", []) : node.pod if node.id == int.node_id][0])
+        node2_id = lookup(int, "node2_id", lookup(int, "channel", null) != null ? try([for pg in local.leaf_interface_policy_group_mapping : pg.type if pg.name == lookup(int, "channel", null) && pg.type == "vpc"][0], null) : null)
+        pod_id   = lookup(int, "pod_id", try([for node in lookup(local.node_policies, "nodes", []) : node.pod if node.id == int.node_id][0], local.defaults.apic.node_policies.nodes.pod))
         fex_id   = lookup(int, "fex_id", null)
         module   = lookup(int, "module", null)
         port     = lookup(int, "port", null)
@@ -438,7 +438,7 @@ module "aci_endpoint_group" {
   static_ports = [for sp in lookup(each.value, "static_ports", []) : {
     node_id              = sp.node_id
     node2_id             = sp.node2_id == "vpc" ? [for pg in local.leaf_interface_policy_group_mapping : lookup(pg, "node_ids", []) if pg.name == sp.channel][0][1] : sp.node2_id
-    pod_id               = sp.pod_id != null ? [for node in lookup(local.node_policies, "nodes", []) : node.pod if node.id == sp.node_id][0] : null
+    pod_id               = sp.pod_id != null ? sp.pod_id : try([for node in lookup(local.node_policies, "nodes", []) : node.pod if node.id == sp.node_id][0], local.defaults.apic.node_policies.nodes.pod)
     channel              = sp.channel
     port                 = sp.port
     sub_port             = sp.sub_port
@@ -590,7 +590,7 @@ module "aci_l3out_interface_profile_manual" {
     mtu         = int.mtu
     node_id     = int.node_id
     node2_id    = int.node2_id == "vpc" ? [for pg in local.leaf_interface_policy_group_mapping : lookup(pg, "node_ids", []) if pg.name == int.channel][0][1] : int.node2_id
-    pod_id      = int.pod_id != null ? [for node in lookup(local.node_policies, "nodes", []) : node.pod if node.id == int.node_id][0] : null
+    pod_id      = int.pod_id != null ? int.pod_id : try([for node in lookup(local.node_policies, "nodes", []) : node.pod if node.id == int.node_id][0], local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.pod)
     module      = int.module
     port        = int.port
     channel     = int.channel
@@ -630,7 +630,7 @@ module "aci_l3out_interface_profile_auto" {
     mtu         = int.mtu
     node_id     = int.node_id
     node2_id    = int.node2_id == "vpc" ? [for pg in local.leaf_interface_policy_group_mapping : lookup(pg, "node_ids", []) if pg.name == int.channel][0][1] : int.node2_id
-    pod_id      = int.pod_id != null ? [for node in lookup(local.node_policies, "nodes", []) : node.pod if node.id == int.node_id][0] : null
+    pod_id      = int.pod_id != null ? int.pod_id : try([for node in lookup(local.node_policies, "nodes", []) : node.pod if node.id == int.node_id][0], local.defaults.apic.tenants.l3outs.nodes.interfaces.pod)
     module      = int.module
     port        = int.port
     channel     = int.channel

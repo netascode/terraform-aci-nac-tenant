@@ -175,7 +175,7 @@ locals {
           l3out                       = l3out.name
           node_profile                = np.name
           name                        = "${ip.name}${local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.name_suffix}"
-          bfd_policy                  = lookup(ip, "bfd_policy", null) != null ? "${ip.bfd_policy}${local.defaults.apic.tenants.policies.bfd_interface_policy.name_suffix}" : ""
+          bfd_policy                  = lookup(ip, "bfd_policy", null) != null ? "${ip.bfd_policy}${local.defaults.apic.tenants.policies.bfd_interface_policies.name_suffix}" : ""
           ospf_interface_profile_name = lookup(lookup(ip, "ospf", {}), "ospf_interface_profile_name", "")
           ospf_authentication_key     = lookup(lookup(ip, "ospf", {}), "auth_key", "")
           ospf_authentication_key_id  = lookup(lookup(ip, "ospf", {}), "auth_key_id", "1")

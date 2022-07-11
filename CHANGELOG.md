@@ -1,3 +1,7 @@
+## 0.1.3 (unreleased)
+
+- Fix BFD interface policy name suffix reference of L3out interface profile
+
 ## 0.1.2
 
 - Fix setting BGP flag for L3outs

@@ -1,4 +1,4 @@
-## 0.1.3 (unreleased)
+## 0.1.3
 
 - Fix BFD interface policy name suffix reference of L3out interface profile
 - Improve node and pod ID lookups

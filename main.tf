@@ -819,6 +819,18 @@ module "aci_dhcp_option_policy" {
   options     = lookup(each.value, "options", [])
 }
 
+module "aci_ip_sla_policy" {
+  source      = "netascode/ip_sla_policy/aci"
+  version     = ">= 0.1.0"
+  for_each    = { for policy in lookup(lookup(local.tenant, "policies", {}), "ip_sla_policies", []) : policy.name => policy if lookup(local.modules, "ip_sla_policy", true) }
+  tenant      = module.aci_tenant[0].name
+  name        = "${each.value.name}${local.defaults.apic.tenants.policies.ip_sla_policies.name_suffix}"
+  description = lookup(each.value, "description", "")
+  multiplier  = lookup(each.value, "multiplier", 3)
+  sla_type    = lookup(each.value, "sla_type", "icmp")
+  port        = lookup(each.value, "port", 0)
+}
+
 module "aci_match_rule" {
   source  = "netascode/match-rule/aci"
   version = ">= 0.1.0"

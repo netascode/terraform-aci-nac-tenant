@@ -826,9 +826,9 @@ module "aci_ip_sla_policy" {
   tenant      = module.aci_tenant[0].name
   name        = "${each.value.name}${local.defaults.apic.tenants.policies.ip_sla_policies.name_suffix}"
   description = lookup(each.value, "description", "")
-  multiplier  = lookup(each.value, "multiplier", 3)
-  sla_type    = lookup(each.value, "sla_type", "icmp")
-  port        = lookup(each.value, "port", 0)
+  multiplier  = lookup(each.value, "multiplier", local.defaults.apic.tenants.policies.ip_sla_policies.multiplier)
+  sla_type    = lookup(each.value, "sla_type", local.defaults.apic.tenants.policies.ip_sla_policies.sla_type)
+  port        = lookup(each.value, "port", local.defaults.apic.tenants.policies.ip_sla_policies.port)
 }
 
 module "aci_match_rule" {

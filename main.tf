@@ -79,7 +79,7 @@ locals {
       key = "${ap.name}/${esg.name}"
       value = {
         application_profile = "${ap.name}${local.defaults.apic.tenants.application_profiles.name_suffix}"
-        name                = "${epg.name}${local.defaults.apic.tenants.application_profiles.endpoint_security_groups.name_suffix}"
+        name                = "${esg.name}${local.defaults.apic.tenants.application_profiles.endpoint_security_groups.name_suffix}"
         description         = lookup(esg, "description", "")
         vrf                 = "${esg.vrf}${local.defaults.apic.tenants.vrfs.name_suffix}"
         shutdown            = lookup(esg, "shutdown", local.defaults.apic.tenants.application_profiles.endpoint_security_groups.shutdown)
@@ -88,8 +88,8 @@ locals {
         contract_consumers  = lookup(lookup(esg, "contracts", {}), "consumers", null) != null ? [for contract in esg.contracts.consumers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
         contract_providers  = lookup(lookup(esg, "contracts", {}), "providers", null) != null ? [for contract in esg.contracts.providers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
         esg_contract_masters = [for master in lookup(lookup(esg, "contracts", {}), "masters", []) : {
-          tenant                  = master.tenant
-          application_profile     = "${master.application_profile}${local.defaults.apic.tenants.application_profiles.name_suffix}"
+          tenant                  = local.tenant.name
+          application_profile     = "${lookup(master, "application_profile", null) != null ? master.application_profile : ap.name}${local.defaults.apic.tenants.application_profiles.name_suffix}"
           endpoint_security_group = "${master.endpoint_security_group}${local.defaults.apic.tenants.application_profiles.endpoint_security_groups.name_suffix}"
         }]
         tag_selectors = [for sel in lookup(esg, "tag_selectors", []) : {
@@ -99,10 +99,10 @@ locals {
           description = lookup(sel, "description", "")
         }]
         epg_selectors = [for sel in lookup(esg, "epg_selectors", []) : {
-          tenant                  = sel.tenant
-          application_profile     = "${sel.application_profile}${local.defaults.apic.tenants.application_profiles.name_suffix}"
-          endpoint_security_group = "${sel.endpoint_security_group}${local.defaults.apic.tenants.application_profiles.endpoint_security_groups.name_suffix}"
-          description             = lookup(sel, "description", "")
+          tenant              = lookup(sel, "tenant", null) != null ? sel.tenant : local.tenant.name
+          application_profile = "${lookup(sel, "application_profile", null) != null ? sel.application_profile : ap.name}${local.defaults.apic.tenants.application_profiles.name_suffix}"
+          endpoint_group      = "${sel.endpoint_group}${local.defaults.apic.tenants.application_profiles.endpoint_groups.name_suffix}"
+          description         = lookup(sel, "description", "")
         }]
         ip_subnet_selectors = [for sel in lookup(esg, "ip_subnet_selectors", []) : {
           value       = sel.value

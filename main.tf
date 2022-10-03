@@ -74,6 +74,44 @@ locals {
     }]
   ])
 
+  endpoint_security_groups = flatten([for ap in lookup(local.tenant, "application_profiles", []) : [
+    for esg in lookup(ap, "endpoint_security_groups", []) : {
+      key = "${ap.name}/${esg.name}"
+      value = {
+        application_profile = "${ap.name}${local.defaults.apic.tenants.application_profiles.name_suffix}"
+        name                = "${esg.name}${local.defaults.apic.tenants.application_profiles.endpoint_security_groups.name_suffix}"
+        description         = lookup(esg, "description", "")
+        vrf                 = "${esg.vrf}${local.defaults.apic.tenants.vrfs.name_suffix}"
+        shutdown            = lookup(esg, "shutdown", local.defaults.apic.tenants.application_profiles.endpoint_security_groups.shutdown)
+        intra_esg_isolation = lookup(esg, "intra_esg_isolation", local.defaults.apic.tenants.application_profiles.endpoint_security_groups.intra_esg_isolation)
+        preferred_group     = lookup(esg, "preferred_group", local.defaults.apic.tenants.application_profiles.endpoint_security_groups.preferred_group)
+        contract_consumers  = lookup(lookup(esg, "contracts", {}), "consumers", null) != null ? [for contract in esg.contracts.consumers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
+        contract_providers  = lookup(lookup(esg, "contracts", {}), "providers", null) != null ? [for contract in esg.contracts.providers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
+        esg_contract_masters = [for master in lookup(lookup(esg, "contracts", {}), "masters", []) : {
+          tenant                  = local.tenant.name
+          application_profile     = "${lookup(master, "application_profile", null) != null ? master.application_profile : ap.name}${local.defaults.apic.tenants.application_profiles.name_suffix}"
+          endpoint_security_group = "${master.endpoint_security_group}${local.defaults.apic.tenants.application_profiles.endpoint_security_groups.name_suffix}"
+        }]
+        tag_selectors = [for sel in lookup(esg, "tag_selectors", []) : {
+          key         = sel.key
+          operator    = lookup(sel, "operator", local.defaults.apic.tenants.application_profiles.endpoint_security_groups.tag_selectors.operator)
+          value       = sel.value
+          description = lookup(sel, "description", "")
+        }]
+        epg_selectors = [for sel in lookup(esg, "epg_selectors", []) : {
+          tenant              = lookup(sel, "tenant", null) != null ? sel.tenant : local.tenant.name
+          application_profile = "${lookup(sel, "application_profile", null) != null ? sel.application_profile : ap.name}${local.defaults.apic.tenants.application_profiles.name_suffix}"
+          endpoint_group      = "${sel.endpoint_group}${local.defaults.apic.tenants.application_profiles.endpoint_groups.name_suffix}"
+          description         = lookup(sel, "description", "")
+        }]
+        ip_subnet_selectors = [for sel in lookup(esg, "ip_subnet_selectors", []) : {
+          value       = sel.value
+          description = lookup(sel, "description", "")
+        }]
+      }
+    }]
+  ])
+
   l3outs = [for l3out in lookup(local.tenant, "l3outs", []) : {
     name        = "${l3out.name}${local.defaults.apic.tenants.l3outs.name_suffix}"
     alias       = lookup(l3out, "alias", "")
@@ -454,6 +492,32 @@ module "aci_endpoint_group" {
     module.aci_bridge_domain,
     module.aci_contract,
     module.aci_imported_contract,
+  ]
+}
+
+module "aci_endpoint_security_group" {
+  source  = "netascode/endpoint-security-group/aci"
+  version = ">= 0.2.0"
+
+  for_each             = { for esg in local.endpoint_security_groups : esg.key => esg.value if lookup(local.modules, "aci_endpoint_security_group", true) }
+  tenant               = module.aci_tenant[0].name
+  application_profile  = module.aci_application_profile[each.value.application_profile].name
+  name                 = each.value.name
+  description          = each.value.description
+  vrf                  = each.value.vrf
+  shutdown             = each.value.shutdown
+  intra_esg_isolation  = each.value.intra_esg_isolation
+  preferred_group      = each.value.preferred_group
+  contract_consumers   = each.value.contract_consumers
+  contract_providers   = each.value.contract_providers
+  esg_contract_masters = each.value.esg_contract_masters
+  tag_selectors        = each.value.tag_selectors
+  epg_selectors        = each.value.epg_selectors
+  ip_subnet_selectors  = each.value.ip_subnet_selectors
+
+  depends_on = [
+    module.aci_vrf,
+    module.aci_contract,
   ]
 }
 

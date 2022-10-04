@@ -27,8 +27,8 @@ locals {
         alias                       = lookup(epg, "alias", "")
         description                 = lookup(epg, "description", "")
         flood_in_encap              = lookup(epg, "flood_in_encap", local.defaults.apic.tenants.application_profiles.endpoint_groups.flood_in_encap)
-        intra_epg_isolation         = lookup(epg, "intra_epg_isolation", local.defaults.apic.tenants.application_profiles.endpoint_groups.intra_epg_isolation) == "enforced" ? true : false
-        preferred_group             = lookup(epg, "preferred_group", local.defaults.apic.tenants.application_profiles.endpoint_groups.preferred_group) == "include" ? true : false
+        intra_epg_isolation         = lookup(epg, "intra_epg_isolation", local.defaults.apic.tenants.application_profiles.endpoint_groups.intra_epg_isolation)
+        preferred_group             = lookup(epg, "preferred_group", local.defaults.apic.tenants.application_profiles.endpoint_groups.preferred_group)
         bridge_domain               = lookup(epg, "bridge_domain", null) != null ? "${epg.bridge_domain}${local.defaults.apic.tenants.bridge_domains.name_suffix}" : ""
         contract_consumers          = lookup(lookup(epg, "contracts", {}), "consumers", null) != null ? [for contract in epg.contracts.consumers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
         contract_providers          = lookup(lookup(epg, "contracts", {}), "providers", null) != null ? [for contract in epg.contracts.providers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
@@ -300,7 +300,7 @@ locals {
         name                        = "${epg.name}${local.defaults.apic.tenants.l3outs.external_endpoint_groups.name_suffix}"
         alias                       = lookup(epg, "alias", "")
         description                 = lookup(epg, "description", "")
-        preferred_group             = lookup(epg, "preferred_group", local.defaults.apic.tenants.l3outs.external_endpoint_groups.preferred_group) == "include" ? true : false
+        preferred_group             = lookup(epg, "preferred_group", local.defaults.apic.tenants.l3outs.external_endpoint_groups.preferred_group)
         contract_consumers          = lookup(lookup(epg, "contracts", {}), "consumers", null) != null ? [for contract in epg.contracts.consumers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
         contract_providers          = lookup(lookup(epg, "contracts", {}), "providers", null) != null ? [for contract in epg.contracts.providers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
         contract_imported_consumers = lookup(lookup(epg, "contracts", {}), "imported_consumers", null) != null ? [for contract in epg.contracts.imported_consumers : "${contract}${local.defaults.apic.tenants.imported_contracts.name_suffix}"] : []

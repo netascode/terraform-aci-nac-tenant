@@ -1,4 +1,4 @@
-## 0.2.2 (unreleased)
+## 0.2.2
 
 - BREAKING CHANGE: Change EPG preferred group attribute to boolean value
 - BREAKING CHANGE: Change External EPG preferred group attribute to boolean value

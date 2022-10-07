@@ -1,3 +1,24 @@
+## 0.2.3 (unreleased)
+
+- Add option to specific QoS class for external EPGs
+- Add option to specific target DSCP value for external EPGs
+- Add aggregate flags to subnet of external EPGs
+- Add option to enable IPv4 multicast for L3out
+- Add option to specify target DSCP for L3out
+- Add option to reference interleak, dampening and redistribution route maps for L3out
+- Add option to configure default route leak policy for L3out
+- Add support for node loopbacks in L3out node profiles
+- Add support for static route BFD in L3out node profiles
+- Add support for loopback BGP peerings in L3out node profiles
+- Add support for PIM policy in L3out interface profiles
+- Add support for IGMP interface policy in L3out interface profiles
+- Add support for QoS class in L3out interface profiles
+- Add support for custom QoS policy in L3out interface profiles
+- Add support for floating SVI in L3out interface profiles
+- Add multiple options to BGP peers in L3out interface profiles
+- Fix default tenant for service graph templates and device selection policies
+- Make `community` and optional attribute of `set_rule`
+
 ## 0.2.2
 
 - BREAKING CHANGE: Change EPG preferred group attribute to boolean value

@@ -132,10 +132,24 @@ locals {
         ]])
       ),
     ])
-    ospf                         = lookup(l3out, "ospf", null) != null ? true : false
-    ospf_area                    = lookup(lookup(l3out, "ospf", {}), "area", "backbone")
-    ospf_area_cost               = lookup(lookup(l3out, "ospf", {}), "area_cost", local.defaults.apic.tenants.l3outs.ospf.area_cost)
-    ospf_area_type               = lookup(lookup(l3out, "ospf", {}), "area_type", local.defaults.apic.tenants.l3outs.ospf.area_type)
+    ospf                                    = lookup(l3out, "ospf", null) != null ? true : false
+    ospf_area                               = try(tonumber(lookup(lookup(l3out, "ospf", {}), "area", "backbone")), false) == true ? "0.0.0.${tonumber(lookup(lookup(l3out, "ospf", {}), "area", "backbone"))}" : "backbone"
+    ospf_area_cost                          = lookup(lookup(l3out, "ospf", {}), "area_cost", local.defaults.apic.tenants.l3outs.ospf.area_cost)
+    ospf_area_type                          = lookup(lookup(l3out, "ospf", {}), "area_type", local.defaults.apic.tenants.l3outs.ospf.area_type)
+    l3_multicast_ipv4                       = lookup(l3out, "l3_multicast_ipv4", local.defaults.apic.tenants.l3outs.l3_multicast_ipv4)
+    target_dscp                             = lookup(l3out, "target_dscp", local.defaults.apic.tenants.l3outs.target_dscp)
+    interleak_route_map                     = lookup(l3out, "interleak_route_map", null) != null ? "${l3out.interleak_route_map}${local.defaults.apic.tenants.policies.route_control_route_maps.name_suffix}" : ""
+    dampening_ipv4_route_map                = lookup(l3out, "dampening_ipv4_route_map", null) != null ? "${l3out.dampening_ipv4_route_map}${local.defaults.apic.tenants.policies.route_control_route_maps.name_suffix}" : ""
+    dampening_ipv6_route_map                = lookup(l3out, "dampening_ipv6_route_map", null) != null ? "${l3out.dampening_ipv6_route_map}${local.defaults.apic.tenants.policies.route_control_route_maps.name_suffix}" : ""
+    default_route_leak_policy               = lookup(l3out, "default_route_leak_policy", null) != null ? true : false
+    default_route_leak_policy_always        = lookup(lookup(l3out, "default_route_leak_policy", {}), "always", local.defaults.apic.tenants.l3outs.default_route_leak_policy.always)
+    default_route_leak_policy_criteria      = lookup(lookup(l3out, "default_route_leak_policy", {}), "criteria", local.defaults.apic.tenants.l3outs.default_route_leak_policy.criteria)
+    default_route_leak_policy_context_scope = lookup(lookup(l3out, "default_route_leak_policy", {}), "context_scope", local.defaults.apic.tenants.l3outs.default_route_leak_policy.context_scope)
+    default_route_leak_policy_outside_scope = lookup(lookup(l3out, "default_route_leak_policy", {}), "outside_scope", local.defaults.apic.tenants.l3outs.default_route_leak_policy.outside_scope)
+    redistribution_route_maps = [for routemap in lookup(l3out, "redistribution_route_maps", []) : {
+      source    = lookup(routemap, "source", local.defaults.apic.tenants.l3outs.redistribution_route_maps.source)
+      route_map = "${routemap.route_map}${local.defaults.apic.tenants.policies.route_control_route_maps.name_suffix}"
+    }]
     import_route_map_description = lookup(lookup(l3out, "import_route_map", {}), "description", "")
     import_route_map_type        = lookup(lookup(l3out, "import_route_map", {}), "type", local.defaults.apic.tenants.l3outs.import_route_map.type)
     import_route_map_contexts = [for context in lookup(lookup(l3out, "import_route_map", {}), "contexts", []) : {
@@ -169,15 +183,45 @@ locals {
           pod_id                = lookup(node, "pod_id", try([for node_ in lookup(local.node_policies, "nodes", []) : node_.pod if node_.id == node.node_id][0], local.defaults.apic.tenants.l3outs.node_profiles.nodes.pod))
           router_id             = node.router_id
           router_id_as_loopback = lookup(node, "router_id_as_loopback", local.defaults.apic.tenants.l3outs.node_profiles.nodes.router_id_as_loopback)
+          loopback              = lookup(node, "loopback", null)
           static_routes = [for sr in lookup(node, "static_routes", []) : {
             description = lookup(sr, "description", "")
             prefix      = sr.prefix
             preference  = lookup(sr, "preference", local.defaults.apic.tenants.l3outs.node_profiles.nodes.static_routes.preference)
+            bfd         = lookup(sr, "bfd", local.defaults.apic.tenants.l3outs.node_profiles.nodes.static_routes.bfd)
             next_hops = [for nh in lookup(sr, "next_hops", []) : {
               ip         = nh.ip
               preference = lookup(nh, "preference", local.defaults.apic.tenants.l3outs.node_profiles.nodes.static_routes.next_hops.preference)
               type       = lookup(nh, "type", local.defaults.apic.tenants.l3outs.node_profiles.nodes.static_routes.next_hops.type)
             }]
+          }]
+          bgp_peers = [for peer in lookup(node, "bgp_peers", []) : {
+            ip                               = peer.ip
+            remote_as                        = peer.remote_as
+            description                      = lookup(peer, "description", "")
+            allow_self_as                    = lookup(peer, "allow_self_as", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.allow_self_as)
+            as_override                      = lookup(peer, "as_override", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.as_override)
+            disable_peer_as_check            = lookup(peer, "disable_peer_as_check", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.disable_peer_as_check)
+            next_hop_self                    = lookup(peer, "next_hop_self", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.next_hop_self)
+            send_community                   = lookup(peer, "send_community", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.send_community)
+            send_ext_community               = lookup(peer, "send_ext_community", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.send_ext_community)
+            password                         = lookup(peer, "password", null)
+            allowed_self_as_count            = lookup(peer, "allowed_self_as_count", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.allowed_self_as_count)
+            bfd                              = lookup(peer, "bfd", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.bfd)
+            disable_connected_check          = lookup(peer, "disable_connected_check", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.disable_connected_check)
+            ttl                              = lookup(peer, "ttl", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.ttl)
+            weight                           = lookup(peer, "weight", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.weight)
+            remove_all_private_as            = lookup(peer, "remove_all_private_as", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.remove_all_private_as)
+            remove_private_as                = lookup(peer, "remove_private_as", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.remove_private_as)
+            replace_private_as_with_local_as = lookup(peer, "replace_private_as_with_local_as", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.replace_private_as_with_local_as)
+            unicast_address_family           = lookup(peer, "unicast_address_family", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.unicast_address_family)
+            multicast_address_family         = lookup(peer, "multicast_address_family", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.multicast_address_family)
+            admin_state                      = lookup(peer, "admin_state", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.admin_state)
+            local_as                         = lookup(peer, "local_as", null)
+            as_propagate                     = lookup(peer, "as_propagate", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.as_propagate)
+            peer_prefix_policy               = lookup(peer, "peer_prefix_policy", null) != null ? "${peer.peer_prefix_policy}${local.defaults.apic.tenants.policies.bgp_peer_prefix_policies.name_suffix}" : null
+            export_route_control             = lookup(peer, "export_route_control", null) != null ? "${peer.export_route_control}${local.defaults.apic.tenants.policies.route_control_route_maps.name_suffix}" : null
+            import_route_control             = lookup(peer, "import_route_control", null) != null ? "${peer.import_route_control}${local.defaults.apic.tenants.policies.route_control_route_maps.name_suffix}" : null
           }]
         }]
       }
@@ -192,15 +236,45 @@ locals {
       pod_id                = lookup(node, "pod_id", try([for node_ in lookup(local.node_policies, "nodes", []) : node_.pod if node_.id == node.node_id][0], local.defaults.apic.tenants.l3outs.nodes.pod))
       router_id             = node.router_id
       router_id_as_loopback = lookup(node, "router_id_as_loopback", local.defaults.apic.tenants.l3outs.nodes.router_id_as_loopback)
+      loopback              = lookup(node, "loopback", null)
       static_routes = [for sr in lookup(node, "static_routes", []) : {
         description = lookup(sr, "description", "")
         prefix      = sr.prefix
         preference  = lookup(sr, "preference", local.defaults.apic.tenants.l3outs.nodes.static_routes.preference)
+        bfd         = lookup(sr, "bfd", local.defaults.apic.tenants.l3outs.node_profiles.nodes.static_routes.bfd)
         next_hops = [for nh in lookup(sr, "next_hops", []) : {
           ip         = nh.ip
           preference = lookup(nh, "preference", local.defaults.apic.tenants.l3outs.nodes.static_routes.next_hops.preference)
           type       = lookup(nh, "type", local.defaults.apic.tenants.l3outs.nodes.static_routes.next_hops.type)
         }]
+      }]
+      bgp_peers = [for peer in lookup(node, "bgp_peers", []) : {
+        ip                               = peer.ip
+        remote_as                        = peer.remote_as
+        description                      = lookup(peer, "description", "")
+        allow_self_as                    = lookup(peer, "allow_self_as", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.allow_self_as)
+        as_override                      = lookup(peer, "as_override", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.as_override)
+        disable_peer_as_check            = lookup(peer, "disable_peer_as_check", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.disable_peer_as_check)
+        next_hop_self                    = lookup(peer, "next_hop_self", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.next_hop_self)
+        send_community                   = lookup(peer, "send_community", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.send_community)
+        send_ext_community               = lookup(peer, "send_ext_community", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.send_ext_community)
+        password                         = lookup(peer, "password", null)
+        allowed_self_as_count            = lookup(peer, "allowed_self_as_count", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.allowed_self_as_count)
+        bfd                              = lookup(peer, "bfd", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.bfd)
+        disable_connected_check          = lookup(peer, "disable_connected_check", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.disable_connected_check)
+        ttl                              = lookup(peer, "ttl", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.ttl)
+        weight                           = lookup(peer, "weight", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.weight)
+        remove_all_private_as            = lookup(peer, "remove_all_private_as", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.remove_all_private_as)
+        remove_private_as                = lookup(peer, "remove_private_as", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.remove_private_as)
+        replace_private_as_with_local_as = lookup(peer, "replace_private_as_with_local_as", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.replace_private_as_with_local_as)
+        unicast_address_family           = lookup(peer, "unicast_address_family", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.unicast_address_family)
+        multicast_address_family         = lookup(peer, "multicast_address_family", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.multicast_address_family)
+        admin_state                      = lookup(peer, "admin_state", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.admin_state)
+        local_as                         = lookup(peer, "local_as", null)
+        as_propagate                     = lookup(peer, "as_propagate", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.as_propagate)
+        peer_prefix_policy               = lookup(peer, "peer_prefix_policy", null) != null ? "${peer.peer_prefix_policy}${local.defaults.apic.tenants.policies.bgp_peer_prefix_policies.name_suffix}" : null
+        export_route_control             = lookup(peer, "export_route_control", null) != null ? "${peer.export_route_control}${local.defaults.apic.tenants.policies.route_control_route_maps.name_suffix}" : null
+        import_route_control             = lookup(peer, "import_route_control", null) != null ? "${peer.import_route_control}${local.defaults.apic.tenants.policies.route_control_route_maps.name_suffix}" : null
       }]
     }]
   } if length(lookup(l3out, "nodes", [])) != 0]
@@ -219,31 +293,59 @@ locals {
           ospf_authentication_key_id  = lookup(lookup(ip, "ospf", {}), "auth_key_id", "1")
           ospf_authentication_type    = lookup(lookup(ip, "ospf", {}), "auth_type", "none")
           ospf_interface_policy       = lookup(lookup(ip, "ospf", {}), "policy", "")
+          pim_policy                  = lookup(ip, "pim_policy", null) != null ? "${ip.pim_policy}${local.defaults.apic.tenants.policies.pim_policies.name_suffix}" : ""
+          igmp_interface_policy       = lookup(ip, "igmp_interface_policy", null) != null ? "${ip.igmp_interface_policy}${local.defaults.apic.tenants.policies.igmp_interface_policies.name_suffix}" : ""
+          qos_class                   = lookup(ip, "qos_class", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.qos_class)
+          custom_qos_policy           = lookup(ip, "custom_qos_policy", null) != null ? "${ip.custom_qos_policy}${local.defaults.apic.tenants.policies.custom_qos.name_suffix}" : ""
           interfaces = lookup(ip, "interfaces", null) == null ? null : [for int in ip.interfaces : {
-            ip          = lookup(int, "ip", "")
-            svi         = lookup(int, "svi", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.svi)
-            vlan        = lookup(int, "vlan", null)
-            description = lookup(int, "description", "")
-            type        = lookup(int, "port", null) != null ? "access" : ([for pg in local.leaf_interface_policy_group_mapping : pg.type if pg.name == lookup(int, "channel", null)][0])
-            mac         = lookup(int, "mac", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.mac)
-            mtu         = lookup(int, "mtu", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.mtu)
-            node_id     = lookup(int, "node_id", lookup(int, "channel", null) != null ? try([for pg in local.leaf_interface_policy_group_mapping : lookup(pg, "node_ids", []) if pg.name == lookup(int, "channel", null)][0][0], null) : null)
-            node2_id    = lookup(int, "node2_id", lookup(int, "channel", null) != null ? try([for pg in local.leaf_interface_policy_group_mapping : pg.type if pg.name == lookup(int, "channel", null) && pg.type == "vpc"][0], null) : null)
-            pod_id      = lookup(int, "pod_id", null)
-            module      = lookup(int, "module", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.module)
-            port        = lookup(int, "port", null)
-            channel     = lookup(int, "channel", null) != null ? "${int.channel}${local.defaults.apic.access_policies.leaf_interface_policy_groups.name_suffix}" : null
-            ip_a        = lookup(int, "ip_a", null)
-            ip_b        = lookup(int, "ip_b", null)
-            ip_shared   = lookup(int, "ip_shared", null)
-            bgp_peers = lookup(int, "bgp_peers", null) == null ? null : [for peer in lookup(int, "bgp_peers", []) : {
-              ip          = peer.ip
-              description = lookup(peer, "description", "")
-              bfd         = lookup(peer, "bfd", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.bfd)
-              ttl         = lookup(peer, "ttl", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.ttl)
-              weight      = lookup(peer, "weight", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.weight)
-              password    = lookup(peer, "password", null)
-              remote_as   = peer.remote_as
+            ip           = lookup(int, "ip", "")
+            svi          = lookup(int, "svi", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.svi)
+            floating_svi = lookup(int, "floating_svi", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.floating_svi)
+            vlan         = lookup(int, "vlan", null)
+            description  = lookup(int, "description", "")
+            type         = lookup(int, "port", null) != null ? "access" : try([for pg in local.leaf_interface_policy_group_mapping : pg.type if pg.name == lookup(int, "channel", null)][0], null)
+            mac          = lookup(int, "mac", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.mac)
+            mtu          = lookup(int, "mtu", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.mtu)
+            node_id      = lookup(int, "node_id", lookup(int, "channel", null) != null ? try([for pg in local.leaf_interface_policy_group_mapping : lookup(pg, "node_ids", []) if pg.name == lookup(int, "channel", null)][0][0], null) : null)
+            node2_id     = lookup(int, "node2_id", lookup(int, "channel", null) != null ? try([for pg in local.leaf_interface_policy_group_mapping : pg.type if pg.name == lookup(int, "channel", null) && pg.type == "vpc"][0], null) : null)
+            pod_id       = lookup(int, "pod_id", null)
+            module       = lookup(int, "module", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.module)
+            port         = lookup(int, "port", null)
+            channel      = lookup(int, "channel", null) != null ? "${int.channel}${local.defaults.apic.access_policies.leaf_interface_policy_groups.name_suffix}" : null
+            ip_a         = lookup(int, "ip_a", null)
+            ip_b         = lookup(int, "ip_b", null)
+            ip_shared    = lookup(int, "ip_shared", null)
+            bgp_peers = [for peer in lookup(int, "bgp_peers", []) : {
+              ip                               = peer.ip
+              remote_as                        = peer.remote_as
+              description                      = lookup(peer, "description", "")
+              allow_self_as                    = lookup(peer, "allow_self_as", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.allow_self_as)
+              as_override                      = lookup(peer, "as_override", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.as_override)
+              disable_peer_as_check            = lookup(peer, "disable_peer_as_check", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.disable_peer_as_check)
+              next_hop_self                    = lookup(peer, "next_hop_self", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.next_hop_self)
+              send_community                   = lookup(peer, "send_community", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.send_community)
+              send_ext_community               = lookup(peer, "send_ext_community", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.send_ext_community)
+              password                         = lookup(peer, "password", null)
+              allowed_self_as_count            = lookup(peer, "allowed_self_as_count", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.allowed_self_as_count)
+              bfd                              = lookup(peer, "bfd", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.bfd)
+              disable_connected_check          = lookup(peer, "disable_connected_check", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.disable_connected_check)
+              ttl                              = lookup(peer, "ttl", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.ttl)
+              weight                           = lookup(peer, "weight", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.weight)
+              remove_all_private_as            = lookup(peer, "remove_all_private_as", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.remove_all_private_as)
+              remove_private_as                = lookup(peer, "remove_private_as", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.remove_private_as)
+              replace_private_as_with_local_as = lookup(peer, "replace_private_as_with_local_as", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.replace_private_as_with_local_as)
+              unicast_address_family           = lookup(peer, "unicast_address_family", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.unicast_address_family)
+              multicast_address_family         = lookup(peer, "multicast_address_family", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.multicast_address_family)
+              admin_state                      = lookup(peer, "admin_state", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.admin_state)
+              local_as                         = lookup(peer, "local_as", null)
+              as_propagate                     = lookup(peer, "as_propagate", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.as_propagate)
+              peer_prefix_policy               = lookup(peer, "peer_prefix_policy", null) != null ? "${peer.peer_prefix_policy}${local.defaults.apic.tenants.policies.bgp_peer_prefix_policies.name_suffix}" : null
+              export_route_control             = lookup(peer, "export_route_control", null) != null ? "${peer.export_route_control}${local.defaults.apic.tenants.policies.route_control_route_maps.name_suffix}" : null
+              import_route_control             = lookup(peer, "import_route_control", null) != null ? "${peer.import_route_control}${local.defaults.apic.tenants.policies.route_control_route_maps.name_suffix}" : null
+            }]
+            paths = [for path in lookup(int, "paths", []) : {
+              physical_domain = path.physical_domain
+              floating_ip     = path.floating_ip
             }]
           }]
         }
@@ -261,32 +363,60 @@ locals {
     ospf_authentication_key_id  = lookup(lookup(l3out, "ospf", {}), "auth_key_id", "1")
     ospf_authentication_type    = lookup(lookup(l3out, "ospf", {}), "auth_type", "none")
     ospf_interface_policy       = lookup(lookup(l3out, "ospf", {}), "policy", "")
+    pim_policy                  = lookup(l3out, "pim_policy", null) != null ? "${l3out.pim_policy}${local.defaults.apic.tenants.policies.pim_policies.name_suffix}" : ""
+    igmp_interface_policy       = lookup(l3out, "igmp_interface_policy", null) != null ? "${l3out.igmp_interface_policy}${local.defaults.apic.tenants.policies.igmp_interface_policies.name_suffix}" : ""
+    qos_class                   = lookup(l3out, "qos_class", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.qos_class)
+    custom_qos_policy           = lookup(l3out, "custom_qos_policy", null) != null ? "${l3out.custom_qos_policy}${local.defaults.apic.tenants.policies.custom_qos.name_suffix}" : ""
     interfaces = flatten([for node in lookup(l3out, "nodes", []) : [
       for int in lookup(node, "interfaces", []) : {
-        ip          = lookup(int, "ip", "")
-        svi         = lookup(int, "svi", local.defaults.apic.tenants.l3outs.nodes.interfaces.svi)
-        vlan        = lookup(int, "vlan", null)
-        description = lookup(int, "description", "")
-        type        = lookup(int, "port", null) != null ? "access" : ([for pg in local.leaf_interface_policy_group_mapping : pg.type if pg.name == lookup(int, "channel", null)][0])
-        mac         = lookup(int, "mac", local.defaults.apic.tenants.l3outs.nodes.interfaces.mac)
-        mtu         = lookup(int, "mtu", local.defaults.apic.tenants.l3outs.nodes.interfaces.mtu)
-        node_id     = lookup(node, "node_id", lookup(int, "channel", null) != null ? try([for pg in local.leaf_interface_policy_group_mapping : lookup(pg, "node_ids", []) if pg.name == lookup(int, "channel", null)][0][0], null) : null)
-        node2_id    = lookup(int, "node2_id", lookup(int, "channel", null) != null ? try([for pg in local.leaf_interface_policy_group_mapping : pg.type if pg.name == lookup(int, "channel", null) && pg.type == "vpc"][0], null) : null)
-        pod_id      = lookup(int, "pod_id", null)
-        module      = lookup(int, "module", local.defaults.apic.tenants.l3outs.nodes.interfaces.module)
-        port        = lookup(int, "port", null)
-        channel     = lookup(int, "channel", null) != null ? "${int.channel}${local.defaults.apic.access_policies.leaf_interface_policy_groups.name_suffix}" : null
-        ip_a        = lookup(int, "ip_a", null)
-        ip_b        = lookup(int, "ip_b", null)
-        ip_shared   = lookup(int, "ip_shared", null)
-        bgp_peers = lookup(int, "bgp_peers", null) == null ? null : [for peer in lookup(int, "bgp_peers", []) : {
-          ip          = peer.ip
-          description = lookup(peer, "description", "")
-          bfd         = lookup(peer, "bfd", local.defaults.apic.tenants.l3outs.nodes.interfaces.bgp_peers.bfd)
-          ttl         = lookup(peer, "ttl", local.defaults.apic.tenants.l3outs.nodes.interfaces.bgp_peers.ttl)
-          weight      = lookup(peer, "weight", local.defaults.apic.tenants.l3outs.nodes.interfaces.bgp_peers.weight)
-          password    = lookup(peer, "password", null)
-          remote_as   = peer.remote_as
+        ip           = lookup(int, "ip", "")
+        svi          = lookup(int, "svi", local.defaults.apic.tenants.l3outs.nodes.interfaces.svi)
+        floating_svi = lookup(int, "floating_svi", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.floating_svi)
+        vlan         = lookup(int, "vlan", null)
+        description  = lookup(int, "description", "")
+        type         = lookup(int, "port", null) != null ? "access" : try([for pg in local.leaf_interface_policy_group_mapping : pg.type if pg.name == lookup(int, "channel", null)][0], null)
+        mac          = lookup(int, "mac", local.defaults.apic.tenants.l3outs.nodes.interfaces.mac)
+        mtu          = lookup(int, "mtu", local.defaults.apic.tenants.l3outs.nodes.interfaces.mtu)
+        node_id      = lookup(node, "node_id", lookup(int, "channel", null) != null ? try([for pg in local.leaf_interface_policy_group_mapping : lookup(pg, "node_ids", []) if pg.name == lookup(int, "channel", null)][0][0], null) : null)
+        node2_id     = lookup(int, "node2_id", lookup(int, "channel", null) != null ? try([for pg in local.leaf_interface_policy_group_mapping : pg.type if pg.name == lookup(int, "channel", null) && pg.type == "vpc"][0], null) : null)
+        pod_id       = lookup(int, "pod_id", null)
+        module       = lookup(int, "module", local.defaults.apic.tenants.l3outs.nodes.interfaces.module)
+        port         = lookup(int, "port", null)
+        channel      = lookup(int, "channel", null) != null ? "${int.channel}${local.defaults.apic.access_policies.leaf_interface_policy_groups.name_suffix}" : null
+        ip_a         = lookup(int, "ip_a", null)
+        ip_b         = lookup(int, "ip_b", null)
+        ip_shared    = lookup(int, "ip_shared", null)
+        bgp_peers = [for peer in lookup(int, "bgp_peers", []) : {
+          ip                               = peer.ip
+          remote_as                        = peer.remote_as
+          description                      = lookup(peer, "description", "")
+          allow_self_as                    = lookup(peer, "allow_self_as", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.allow_self_as)
+          as_override                      = lookup(peer, "as_override", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.as_override)
+          disable_peer_as_check            = lookup(peer, "disable_peer_as_check", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.disable_peer_as_check)
+          next_hop_self                    = lookup(peer, "next_hop_self", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.next_hop_self)
+          send_community                   = lookup(peer, "send_community", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.send_community)
+          send_ext_community               = lookup(peer, "send_ext_community", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.send_ext_community)
+          password                         = lookup(peer, "password", null)
+          allowed_self_as_count            = lookup(peer, "allowed_self_as_count", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.allowed_self_as_count)
+          bfd                              = lookup(peer, "bfd", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.bfd)
+          disable_connected_check          = lookup(peer, "disable_connected_check", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.disable_connected_check)
+          ttl                              = lookup(peer, "ttl", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.ttl)
+          weight                           = lookup(peer, "weight", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.weight)
+          remove_all_private_as            = lookup(peer, "remove_all_private_as", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.remove_all_private_as)
+          remove_private_as                = lookup(peer, "remove_private_as", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.remove_private_as)
+          replace_private_as_with_local_as = lookup(peer, "replace_private_as_with_local_as", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.replace_private_as_with_local_as)
+          unicast_address_family           = lookup(peer, "unicast_address_family", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.unicast_address_family)
+          multicast_address_family         = lookup(peer, "multicast_address_family", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.multicast_address_family)
+          admin_state                      = lookup(peer, "admin_state", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.admin_state)
+          local_as                         = lookup(peer, "local_as", null)
+          as_propagate                     = lookup(peer, "as_propagate", local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.bgp_peers.as_propagate)
+          peer_prefix_policy               = lookup(peer, "peer_prefix_policy", null) != null ? "${peer.peer_prefix_policy}${local.defaults.apic.tenants.policies.bgp_peer_prefix_policies.name_suffix}" : null
+          export_route_control             = lookup(peer, "export_route_control", null) != null ? "${peer.export_route_control}${local.defaults.apic.tenants.policies.route_control_route_maps.name_suffix}" : null
+          import_route_control             = lookup(peer, "import_route_control", null) != null ? "${peer.import_route_control}${local.defaults.apic.tenants.policies.route_control_route_maps.name_suffix}" : null
+        }]
+        paths = [for path in lookup(int, "paths", []) : {
+          physical_domain = path.physical_domain
+          floating_ip     = path.floating_ip
         }]
       }
     ]])
@@ -301,18 +431,23 @@ locals {
         alias                       = lookup(epg, "alias", "")
         description                 = lookup(epg, "description", "")
         preferred_group             = lookup(epg, "preferred_group", local.defaults.apic.tenants.l3outs.external_endpoint_groups.preferred_group)
+        qos_class                   = lookup(epg, "qos_class", local.defaults.apic.tenants.l3outs.external_endpoint_groups.qos_class)
+        target_dscp                 = lookup(epg, "target_dscp", local.defaults.apic.tenants.l3outs.external_endpoint_groups.target_dscp)
         contract_consumers          = lookup(lookup(epg, "contracts", {}), "consumers", null) != null ? [for contract in epg.contracts.consumers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
         contract_providers          = lookup(lookup(epg, "contracts", {}), "providers", null) != null ? [for contract in epg.contracts.providers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
         contract_imported_consumers = lookup(lookup(epg, "contracts", {}), "imported_consumers", null) != null ? [for contract in epg.contracts.imported_consumers : "${contract}${local.defaults.apic.tenants.imported_contracts.name_suffix}"] : []
         subnets = [for subnet in lookup(epg, "subnets", []) : {
-          name                    = lookup(subnet, "name", "")
-          prefix                  = subnet.prefix
-          import_route_control    = lookup(subnet, "import_route_control", local.defaults.apic.tenants.l3outs.external_endpoint_groups.subnets.import_route_control)
-          export_route_control    = lookup(subnet, "export_route_control", local.defaults.apic.tenants.l3outs.external_endpoint_groups.subnets.export_route_control)
-          shared_route_control    = lookup(subnet, "shared_route_control", local.defaults.apic.tenants.l3outs.external_endpoint_groups.subnets.shared_route_control)
-          import_security         = lookup(subnet, "import_security", local.defaults.apic.tenants.l3outs.external_endpoint_groups.subnets.import_security)
-          shared_security         = lookup(subnet, "shared_security", local.defaults.apic.tenants.l3outs.external_endpoint_groups.subnets.shared_security)
-          bgp_route_summarization = lookup(subnet, "bgp_route_summarization", local.defaults.apic.tenants.l3outs.external_endpoint_groups.subnets.bgp_route_summarization)
+          name                           = lookup(subnet, "name", "")
+          prefix                         = subnet.prefix
+          import_route_control           = lookup(subnet, "import_route_control", local.defaults.apic.tenants.l3outs.external_endpoint_groups.subnets.import_route_control)
+          export_route_control           = lookup(subnet, "export_route_control", local.defaults.apic.tenants.l3outs.external_endpoint_groups.subnets.export_route_control)
+          shared_route_control           = lookup(subnet, "shared_route_control", local.defaults.apic.tenants.l3outs.external_endpoint_groups.subnets.shared_route_control)
+          import_security                = lookup(subnet, "import_security", local.defaults.apic.tenants.l3outs.external_endpoint_groups.subnets.import_security)
+          shared_security                = lookup(subnet, "shared_security", local.defaults.apic.tenants.l3outs.external_endpoint_groups.subnets.shared_security)
+          aggregate_import_route_control = lookup(subnet, "aggregate_import_route_control", local.defaults.apic.tenants.l3outs.external_endpoint_groups.subnets.aggregate_import_route_control)
+          aggregate_export_route_control = lookup(subnet, "aggregate_export_route_control", local.defaults.apic.tenants.l3outs.external_endpoint_groups.subnets.aggregate_export_route_control)
+          aggregate_shared_route_control = lookup(subnet, "aggregate_shared_route_control", local.defaults.apic.tenants.l3outs.external_endpoint_groups.subnets.aggregate_shared_route_control)
+          bgp_route_summarization        = lookup(subnet, "bgp_route_summarization", local.defaults.apic.tenants.l3outs.external_endpoint_groups.subnets.bgp_route_summarization)
         }]
       }
     }]
@@ -571,24 +706,35 @@ module "aci_l3out" {
   source  = "netascode/l3out/aci"
   version = ">= 0.2.0"
 
-  for_each                     = { for l3out in local.l3outs : l3out.name => l3out if lookup(local.modules, "aci_l3out", true) }
-  tenant                       = module.aci_tenant[0].name
-  name                         = each.value.name
-  alias                        = each.value.alias
-  description                  = each.value.description
-  routed_domain                = each.value.domain
-  vrf                          = each.value.vrf
-  bgp                          = each.value.bgp
-  ospf                         = each.value.ospf
-  ospf_area                    = each.value.ospf_area
-  ospf_area_cost               = each.value.ospf_area_cost
-  ospf_area_type               = each.value.ospf_area_type
-  import_route_map_description = each.value.import_route_map_description
-  import_route_map_type        = each.value.import_route_map_type
-  import_route_map_contexts    = each.value.import_route_map_contexts
-  export_route_map_description = each.value.export_route_map_description
-  export_route_map_type        = each.value.export_route_map_type
-  export_route_map_contexts    = each.value.export_route_map_contexts
+  for_each                                = { for l3out in local.l3outs : l3out.name => l3out if lookup(local.modules, "aci_l3out", true) }
+  tenant                                  = module.aci_tenant[0].name
+  name                                    = each.value.name
+  alias                                   = each.value.alias
+  description                             = each.value.description
+  routed_domain                           = each.value.domain
+  vrf                                     = each.value.vrf
+  bgp                                     = each.value.bgp
+  ospf                                    = each.value.ospf
+  ospf_area                               = each.value.ospf_area
+  ospf_area_cost                          = each.value.ospf_area_cost
+  ospf_area_type                          = each.value.ospf_area_type
+  l3_multicast_ipv4                       = each.value.l3_multicast_ipv4
+  target_dscp                             = each.value.target_dscp
+  interleak_route_map                     = each.value.interleak_route_map
+  dampening_ipv4_route_map                = each.value.dampening_ipv4_route_map
+  dampening_ipv6_route_map                = each.value.dampening_ipv6_route_map
+  default_route_leak_policy               = each.value.default_route_leak_policy
+  default_route_leak_policy_always        = each.value.default_route_leak_policy_always
+  default_route_leak_policy_criteria      = each.value.default_route_leak_policy_criteria
+  default_route_leak_policy_context_scope = each.value.default_route_leak_policy_context_scope
+  default_route_leak_policy_outside_scope = each.value.default_route_leak_policy_outside_scope
+  redistribution_route_maps               = each.value.redistribution_route_maps
+  import_route_map_description            = each.value.import_route_map_description
+  import_route_map_type                   = each.value.import_route_map_type
+  import_route_map_contexts               = each.value.import_route_map_contexts
+  export_route_map_description            = each.value.export_route_map_description
+  export_route_map_type                   = each.value.export_route_map_type
+  export_route_map_contexts               = each.value.export_route_map_contexts
 
   depends_on = [
     module.aci_vrf,
@@ -601,7 +747,7 @@ module "aci_l3out" {
 
 module "aci_l3out_node_profile_manual" {
   source  = "netascode/l3out-node-profile/aci"
-  version = ">= 0.2.0"
+  version = ">= 0.2.1"
 
   for_each = { for np in local.node_profiles_manual : np.key => np.value if lookup(local.modules, "aci_l3out_node_profile", true) }
   tenant   = module.aci_tenant[0].name
@@ -616,7 +762,7 @@ module "aci_l3out_node_profile_manual" {
 
 module "aci_l3out_node_profile_auto" {
   source  = "netascode/l3out-node-profile/aci"
-  version = ">= 0.2.0"
+  version = ">= 0.2.1"
 
   for_each = { for np in local.node_profiles_auto : np.name => np if lookup(local.modules, "aci_l3out_node_profile", true) }
   tenant   = module.aci_tenant[0].name
@@ -631,7 +777,7 @@ module "aci_l3out_node_profile_auto" {
 
 module "aci_l3out_interface_profile_manual" {
   source  = "netascode/l3out-interface-profile/aci"
-  version = ">= 0.2.0"
+  version = ">= 0.2.2"
 
   for_each                    = { for ip in local.interface_profiles_manual : ip.key => ip.value if lookup(local.modules, "aci_l3out_interface_profile", true) }
   tenant                      = module.aci_tenant[0].name
@@ -644,24 +790,30 @@ module "aci_l3out_interface_profile_manual" {
   ospf_authentication_key_id  = each.value.ospf_authentication_key_id
   ospf_authentication_type    = each.value.ospf_authentication_type
   ospf_interface_policy       = each.value.ospf_interface_policy
+  pim_policy                  = each.value.pim_policy
+  igmp_interface_policy       = each.value.igmp_interface_policy
+  qos_class                   = each.value.qos_class
+  custom_qos_policy           = each.value.custom_qos_policy
   interfaces = each.value.interfaces == null ? null : [for int in lookup(each.value, "interfaces", []) : {
-    ip          = int.ip
-    svi         = int.svi
-    vlan        = int.vlan
-    description = int.description
-    type        = int.type
-    mac         = int.mac
-    mtu         = int.mtu
-    node_id     = int.node_id
-    node2_id    = int.node2_id == "vpc" ? [for pg in local.leaf_interface_policy_group_mapping : lookup(pg, "node_ids", []) if pg.name == int.channel][0][1] : int.node2_id
-    pod_id      = int.pod_id != null ? int.pod_id : try([for node in lookup(local.node_policies, "nodes", []) : node.pod if node.id == int.node_id][0], local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.pod)
-    module      = int.module
-    port        = int.port
-    channel     = int.channel
-    ip_a        = int.ip_a
-    ip_b        = int.ip_b
-    ip_shared   = int.ip_shared
-    bgp_peers   = int.bgp_peers
+    ip           = int.ip
+    svi          = int.svi
+    floating_svi = int.floating_svi
+    vlan         = int.vlan
+    description  = int.description
+    type         = int.type
+    mac          = int.mac
+    mtu          = int.mtu
+    node_id      = int.node_id
+    node2_id     = int.node2_id == "vpc" ? [for pg in local.leaf_interface_policy_group_mapping : lookup(pg, "node_ids", []) if pg.name == int.channel][0][1] : int.node2_id
+    pod_id       = int.pod_id != null ? int.pod_id : try([for node in lookup(local.node_policies, "nodes", []) : node.pod if node.id == int.node_id][0], local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.pod)
+    module       = int.module
+    port         = int.port
+    channel      = int.channel
+    ip_a         = int.ip_a
+    ip_b         = int.ip_b
+    ip_shared    = int.ip_shared
+    bgp_peers    = int.bgp_peers
+    paths        = int.paths
   }]
 
   depends_on = [
@@ -671,7 +823,7 @@ module "aci_l3out_interface_profile_manual" {
 
 module "aci_l3out_interface_profile_auto" {
   source  = "netascode/l3out-interface-profile/aci"
-  version = ">= 0.2.0"
+  version = ">= 0.2.2"
 
   for_each                    = { for ip in local.interface_profiles_auto : ip.name => ip if lookup(local.modules, "aci_l3out_interface_profile", true) }
   tenant                      = module.aci_tenant[0].name
@@ -684,24 +836,30 @@ module "aci_l3out_interface_profile_auto" {
   ospf_authentication_key_id  = each.value.ospf_authentication_key_id
   ospf_authentication_type    = each.value.ospf_authentication_type
   ospf_interface_policy       = each.value.ospf_interface_policy
+  pim_policy                  = each.value.pim_policy
+  igmp_interface_policy       = each.value.igmp_interface_policy
+  qos_class                   = each.value.qos_class
+  custom_qos_policy           = each.value.custom_qos_policy
   interfaces = each.value.interfaces == null ? null : [for int in lookup(each.value, "interfaces", []) : {
-    ip          = int.ip
-    svi         = int.svi
-    vlan        = int.vlan
-    description = int.description
-    type        = int.type
-    mac         = int.mac
-    mtu         = int.mtu
-    node_id     = int.node_id
-    node2_id    = int.node2_id == "vpc" ? [for pg in local.leaf_interface_policy_group_mapping : lookup(pg, "node_ids", []) if pg.name == int.channel][0][1] : int.node2_id
-    pod_id      = int.pod_id != null ? int.pod_id : try([for node in lookup(local.node_policies, "nodes", []) : node.pod if node.id == int.node_id][0], local.defaults.apic.tenants.l3outs.nodes.interfaces.pod)
-    module      = int.module
-    port        = int.port
-    channel     = int.channel
-    ip_a        = int.ip_a
-    ip_b        = int.ip_b
-    ip_shared   = int.ip_shared
-    bgp_peers   = int.bgp_peers
+    ip           = int.ip
+    svi          = int.svi
+    floating_svi = int.floating_svi
+    vlan         = int.vlan
+    description  = int.description
+    type         = int.type
+    mac          = int.mac
+    mtu          = int.mtu
+    node_id      = int.node_id
+    node2_id     = int.node2_id == "vpc" ? [for pg in local.leaf_interface_policy_group_mapping : lookup(pg, "node_ids", []) if pg.name == int.channel][0][1] : int.node2_id
+    pod_id       = int.pod_id != null ? int.pod_id : try([for node in lookup(local.node_policies, "nodes", []) : node.pod if node.id == int.node_id][0], local.defaults.apic.tenants.l3outs.nodes.interfaces.pod)
+    module       = int.module
+    port         = int.port
+    channel      = int.channel
+    ip_a         = int.ip_a
+    ip_b         = int.ip_b
+    ip_shared    = int.ip_shared
+    bgp_peers    = int.bgp_peers
+    paths        = int.paths
   }]
 
   depends_on = [
@@ -711,7 +869,7 @@ module "aci_l3out_interface_profile_auto" {
 
 module "aci_external_endpoint_group" {
   source  = "netascode/external-endpoint-group/aci"
-  version = ">= 0.2.0"
+  version = ">= 0.2.1"
 
   for_each                    = { for epg in local.external_endpoint_groups : epg.key => epg.value if lookup(local.modules, "aci_external_endpoint_group", true) }
   tenant                      = module.aci_tenant[0].name
@@ -720,6 +878,8 @@ module "aci_external_endpoint_group" {
   alias                       = each.value.alias
   description                 = each.value.description
   preferred_group             = each.value.preferred_group
+  qos_class                   = each.value.qos_class
+  target_dscp                 = each.value.target_dscp
   contract_consumers          = each.value.contract_consumers
   contract_providers          = each.value.contract_providers
   contract_imported_consumers = each.value.contract_imported_consumers
@@ -908,7 +1068,7 @@ module "aci_set_rule" {
   tenant         = module.aci_tenant[0].name
   name           = "${each.value.name}${local.defaults.apic.tenants.policies.set_rules.name_suffix}"
   description    = lookup(each.value, "description", "")
-  community      = each.value.community
+  community      = lookup(each.value, "community", "")
   community_mode = lookup(each.value, "community_mode", local.defaults.apic.tenants.policies.set_rules.community_mode)
 }
 
@@ -1007,7 +1167,7 @@ module "aci_service_graph_template" {
   redirect            = lookup(each.value, "redirect", local.defaults.apic.tenants.services.service_graph_templates.redirect)
   share_encapsulation = lookup(each.value, "share_encapsulation", local.defaults.apic.tenants.services.service_graph_templates.share_encapsulation)
   device_name         = "${each.value.device.name}${local.defaults.apic.tenants.services.l4l7_devices.name_suffix}"
-  device_tenant       = lookup(each.value.device, "tenant", null)
+  device_tenant       = lookup(each.value.device, "tenant", module.aci_tenant[0].name)
   device_function     = length(local.l4l7_devices) != 0 ? [for device in local.l4l7_devices : lookup(device, "function", []) if device.name == each.value.device.name][0] : "None"
   device_copy         = (length(local.l4l7_devices) != 0 ? [for device in local.l4l7_devices : lookup(device, "copy_device", []) if device.name == each.value.device.name][0] : false)
   device_managed      = (length(local.l4l7_devices) != 0 ? [for device in local.l4l7_devices : lookup(device, "managed", []) if device.name == each.value.device.name][0] : false)
@@ -1025,18 +1185,18 @@ module "aci_device_selection_policy" {
   tenant                                                  = module.aci_tenant[0].name
   contract                                                = "${each.value.contract}${local.defaults.apic.tenants.contracts.name_suffix}"
   service_graph_template                                  = "${each.value.service_graph_template}${local.defaults.apic.tenants.services.service_graph_templates.name_suffix}"
-  sgt_device_tenant                                       = length(lookup(lookup(local.tenant, "services", {}), "service_graph_templates", [])) != 0 ? [for sg_template in lookup(lookup(local.tenant, "services", {}), "service_graph_templates", []) : lookup(sg_template.device, "tenant", null) if sg_template.name == each.value.service_graph_template][0] : ""
+  sgt_device_tenant                                       = length(lookup(lookup(local.tenant, "services", {}), "service_graph_templates", [])) != 0 ? [for sg_template in lookup(lookup(local.tenant, "services", {}), "service_graph_templates", []) : lookup(sg_template.device, "tenant", module.aci_tenant[0].name) if sg_template.name == each.value.service_graph_template][0] : module.aci_tenant[0].name
   sgt_device_name                                         = length(lookup(lookup(local.tenant, "services", {}), "service_graph_templates", [])) != 0 ? [for sg_template in lookup(lookup(local.tenant, "services", {}), "service_graph_templates", []) : "${sg_template.device.name}${local.defaults.apic.tenants.services.l4l7_devices.name_suffix}" if sg_template.name == each.value.service_graph_template][0] : ""
   consumer_l3_destination                                 = lookup(each.value.consumer, "l3_destination", local.defaults.apic.tenants.services.device_selection_policies.consumer.l3_destination)
   consumer_permit_logging                                 = lookup(each.value.consumer, "permit_logging", local.defaults.apic.tenants.services.device_selection_policies.consumer.permit_logging)
   consumer_logical_interface                              = "${each.value.consumer.logical_interface}${local.defaults.apic.tenants.services.l4l7_devices.logical_interfaces.name_suffix}"
   consumer_redirect_policy                                = lookup(each.value.consumer, "redirect_policy", null) != null ? "${each.value.consumer.redirect_policy.name}${local.defaults.apic.tenants.services.redirect_policies.name_suffix}" : ""
-  consumer_redirect_policy_tenant                         = lookup(lookup(each.value.consumer, "redirect_policy", {}), "tenant", "")
+  consumer_redirect_policy_tenant                         = lookup(lookup(each.value.consumer, "redirect_policy", {}), "tenant", module.aci_tenant[0].name)
   consumer_bridge_domain                                  = lookup(each.value.consumer, "bridge_domain", null) != null ? "${each.value.consumer.bridge_domain.name}${local.defaults.apic.tenants.bridge_domains.name_suffix}" : ""
-  consumer_bridge_domain_tenant                           = lookup(lookup(each.value.consumer, "bridge_domain", {}), "tenant", null)
+  consumer_bridge_domain_tenant                           = lookup(lookup(each.value.consumer, "bridge_domain", {}), "tenant", module.aci_tenant[0].name)
   consumer_external_endpoint_group                        = lookup(each.value.consumer, "external_endpoint_group", null) != null ? "${each.value.consumer.external_endpoint_group.name}${local.defaults.apic.tenants.l3outs.external_endpoint_groups.name_suffix}" : ""
   consumer_external_endpoint_group_l3out                  = lookup(each.value.consumer, "external_endpoint_group", null) != null ? "${each.value.consumer.external_endpoint_group.l3out}${local.defaults.apic.tenants.l3outs.name_suffix}" : ""
-  consumer_external_endpoint_group_tenant                 = lookup(lookup(each.value.consumer, "external_endpoint_group", {}), "tenant", "")
+  consumer_external_endpoint_group_tenant                 = lookup(lookup(each.value.consumer, "external_endpoint_group", {}), "tenant", module.aci_tenant[0].name)
   consumer_external_endpoint_group_redistribute_bgp       = lookup(lookup(lookup(each.value.consumer, "external_endpoint_group", {}), "redistribute", {}), "bgp", local.defaults.apic.tenants.services.device_selection_policies.consumer.external_endpoint_group.redistribute.bgp)
   consumer_external_endpoint_group_redistribute_ospf      = lookup(lookup(lookup(each.value.consumer, "external_endpoint_group", {}), "redistribute", {}), "ospf", local.defaults.apic.tenants.services.device_selection_policies.consumer.external_endpoint_group.redistribute.ospf)
   consumer_external_endpoint_group_redistribute_connected = lookup(lookup(lookup(each.value.consumer, "external_endpoint_group", {}), "redistribute", {}), "connected", local.defaults.apic.tenants.services.device_selection_policies.consumer.external_endpoint_group.redistribute.connected)
@@ -1045,12 +1205,12 @@ module "aci_device_selection_policy" {
   provider_permit_logging                                 = lookup(each.value.provider, "permit_logging", local.defaults.apic.tenants.services.device_selection_policies.provider.permit_logging)
   provider_logical_interface                              = "${each.value.provider.logical_interface}${local.defaults.apic.tenants.services.l4l7_devices.logical_interfaces.name_suffix}"
   provider_redirect_policy                                = lookup(each.value.provider, "redirect_policy", null) != null ? "${each.value.provider.redirect_policy.name}${local.defaults.apic.tenants.services.redirect_policies.name_suffix}" : ""
-  provider_redirect_policy_tenant                         = lookup(lookup(each.value.provider, "redirect_policy", {}), "tenant", "")
+  provider_redirect_policy_tenant                         = lookup(lookup(each.value.provider, "redirect_policy", {}), "tenant", module.aci_tenant[0].name)
   provider_bridge_domain                                  = lookup(each.value.provider, "bridge_domain", null) != null ? "${each.value.provider.bridge_domain.name}${local.defaults.apic.tenants.bridge_domains.name_suffix}" : ""
-  provider_bridge_domain_tenant                           = lookup(lookup(each.value.provider, "bridge_domain", {}), "tenant", null)
+  provider_bridge_domain_tenant                           = lookup(lookup(each.value.provider, "bridge_domain", {}), "tenant", module.aci_tenant[0].name)
   provider_external_endpoint_group                        = lookup(each.value.provider, "external_endpoint_group", null) != null ? "${each.value.provider.external_endpoint_group.name}${local.defaults.apic.tenants.l3outs.external_endpoint_groups.name_suffix}" : ""
   provider_external_endpoint_group_l3out                  = lookup(each.value.provider, "external_endpoint_group", null) != null ? "${each.value.provider.external_endpoint_group.l3out}${local.defaults.apic.tenants.l3outs.name_suffix}" : ""
-  provider_external_endpoint_group_tenant                 = lookup(lookup(each.value.provider, "external_endpoint_group", {}), "tenant", "")
+  provider_external_endpoint_group_tenant                 = lookup(lookup(each.value.provider, "external_endpoint_group", {}), "tenant", module.aci_tenant[0].name)
   provider_external_endpoint_group_redistribute_bgp       = lookup(lookup(lookup(each.value.provider, "external_endpoint_group", {}), "redistribute", {}), "bgp", local.defaults.apic.tenants.services.device_selection_policies.provider.external_endpoint_group.redistribute.bgp)
   provider_external_endpoint_group_redistribute_ospf      = lookup(lookup(lookup(each.value.provider, "external_endpoint_group", {}), "redistribute", {}), "ospf", local.defaults.apic.tenants.services.device_selection_policies.provider.external_endpoint_group.redistribute.ospf)
   provider_external_endpoint_group_redistribute_connected = lookup(lookup(lookup(each.value.provider, "external_endpoint_group", {}), "redistribute", {}), "connected", local.defaults.apic.tenants.services.device_selection_policies.provider.external_endpoint_group.redistribute.connected)

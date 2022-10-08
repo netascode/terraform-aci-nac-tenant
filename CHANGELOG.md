@@ -1,4 +1,4 @@
-## 0.2.3 (unreleased)
+## 0.2.3
 
 - Add option to specific QoS class for external EPGs
 - Add option to specific target DSCP value for external EPGs

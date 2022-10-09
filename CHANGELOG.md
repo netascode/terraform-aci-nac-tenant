@@ -1,3 +1,7 @@
+## 0.2.4 (unreleased)
+
+- Fix BGP peer address family attribute order for L3out node profiles
+
 ## 0.2.3
 
 - Add option to specific QoS class for external EPGs

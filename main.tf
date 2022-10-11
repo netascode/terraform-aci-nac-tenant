@@ -1091,8 +1091,8 @@ module "aci_set_rule" {
   set_as_path_count    = lookup(lookup(each.value, "set_as_path ", {}), "count", local.defaults.apic.tenants.policies.set_rules.set_as_path.count)
   set_as_path_order    = lookup(lookup(each.value, "set_as_path ", {}), "order", local.defaults.apic.tenants.policies.set_rules.set_as_path.order)
   set_as_path_asn      = lookup(lookup(each.value, "set_as_path ", {}), "asn", null)
-  next_hop_propagation = lookup(each.value, "next_hop_propagation", false)
-  multipath            = lookup(each.value, "multipath", false)
+  next_hop_propagation = lookup(each.value, "next_hop_propagation", local.defaults.apic.tenants.policies.set_rules.next_hop_propagation)
+  multipath            = lookup(each.value, "multipath", local.defaults.apic.tenants.policies.set_rules.multipath)
 }
 
 module "aci_bfd_interface_policy" {

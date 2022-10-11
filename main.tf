@@ -820,13 +820,14 @@ module "aci_dhcp_option_policy" {
 }
 
 module "aci_ip_sla_policy" {
-  source      = "netascode/ip_sla_policy/aci"
+  source      = "netascode/ip-sla-policy/aci"
   version     = ">= 0.1.0"
   for_each    = { for policy in lookup(lookup(local.tenant, "policies", {}), "ip_sla_policies", []) : policy.name => policy if lookup(local.modules, "ip_sla_policy", true) }
   tenant      = module.aci_tenant[0].name
   name        = "${each.value.name}${local.defaults.apic.tenants.policies.ip_sla_policies.name_suffix}"
   description = lookup(each.value, "description", "")
   multiplier  = lookup(each.value, "multiplier", local.defaults.apic.tenants.policies.ip_sla_policies.multiplier)
+  frequency   = lookup(each.value, "frequency", local.defaults.apic.tenants.policies.ip_sla_policies.frequency)
   sla_type    = lookup(each.value, "sla_type", local.defaults.apic.tenants.policies.ip_sla_policies.sla_type)
   port        = lookup(each.value, "port", local.defaults.apic.tenants.policies.ip_sla_policies.port)
 }

@@ -1,6 +1,7 @@
 ## 0.2.4 (unreleased)
 
 - Fix BGP peer address family attribute order for L3out node profiles
+- Add additional attributes to set rules
 
 ## 0.2.3
 

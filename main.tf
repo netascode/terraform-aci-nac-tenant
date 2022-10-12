@@ -1016,6 +1016,23 @@ module "aci_bgp_timer_policy" {
   stale_interval          = lookup(each.value, "stale_interval", local.defaults.apic.tenants.policies.bgp_timer_policies.stale_interval)
 }
 
+module "aci_bgp_address_family_context_policy" {
+  source  = "netascode/bgp-address-family-context-policy/aci"
+  version = ">= 0.1.0"
+
+  for_each               = { for pol in lookup(lookup(local.tenant, "policies", {}), "bgp_address_family_context_policies", []) : pol.name => pol if lookup(local.modules, "aci_bgp_address_family_context_policy", true) }
+  tenant                 = module.aci_tenant[0].name
+  name                   = "${each.value.name}${local.defaults.apic.tenants.policies.bgp_address_family_context_policies.name_suffix}"
+  description            = lookup(each.value, "description", "")
+  enable_host_route_leak = lookup(each.value, "enable_host_route_leak", local.defaults.apic.tenants.policies.bgp_address_family_context_policies.enable_host_route_leak)
+  ebgp_distance          = lookup(each.value, "ebgp_distance", local.defaults.apic.tenants.policies.bgp_address_family_context_policies.ebgp_distance)
+  ibgp_distance          = lookup(each.value, "ibgp_distance", local.defaults.apic.tenants.policies.bgp_address_family_context_policies.ibgp_distance)
+  local_distance         = lookup(each.value, "local_distance", local.defaults.apic.tenants.policies.bgp_address_family_context_policies.local_distance)
+  local_max_ecmp         = lookup(each.value, "local_max_ecmp", local.defaults.apic.tenants.policies.bgp_address_family_context_policies.local_max_ecmp)
+  ebgp_max_ecmp          = lookup(each.value, "ebgp_max_ecmp", local.defaults.apic.tenants.policies.bgp_address_family_context_policies.ebgp_max_ecmp)
+  ibgp_max_ecmp          = lookup(each.value, "ibgp_max_ecmp", local.defaults.apic.tenants.policies.bgp_address_family_context_policies.ibgp_max_ecmp)
+}
+
 module "aci_dhcp_relay_policy" {
   source  = "netascode/dhcp-relay-policy/aci"
   version = ">= 0.2.0"

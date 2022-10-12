@@ -1204,7 +1204,6 @@ module "aci_redirect_health_group" {
   tenant      = module.aci_tenant[0].name
   name        = "${each.value.name}${local.defaults.apic.tenants.services.redirect_health_groups.name_suffix}"
   description = lookup(each.value, "description", "")
-
 }
 
 module "aci_service_graph_template" {

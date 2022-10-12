@@ -1154,26 +1154,29 @@ module "aci_redirect_policy" {
   source  = "netascode/redirect-policy/aci"
   version = ">= 0.2.0"
 
-  for_each              = { for policy in lookup(lookup(local.tenant, "services", {}), "redirect_policies", []) : policy.name => policy if lookup(local.modules, "aci_redirect_policy", true) }
-  tenant                = module.aci_tenant[0].name
-  name                  = "${each.value.name}${local.defaults.apic.tenants.services.redirect_policies.name_suffix}"
-  alias                 = lookup(each.value, "alias", "")
-  description           = lookup(each.value, "description", "")
-  anycast               = lookup(each.value, "anycast", local.defaults.apic.tenants.services.redirect_policies.anycast)
-  type                  = lookup(each.value, "type", local.defaults.apic.tenants.services.redirect_policies.type)
-  hashing               = lookup(each.value, "hashing", local.defaults.apic.tenants.services.redirect_policies.hashing)
-  threshold             = lookup(each.value, "threshold", local.defaults.apic.tenants.services.redirect_policies.threshold)
-  max_threshold         = lookup(each.value, "max_threshold", local.defaults.apic.tenants.services.redirect_policies.max_threshold)
-  min_threshold         = lookup(each.value, "min_threshold", local.defaults.apic.tenants.services.redirect_policies.min_threshold)
-  pod_aware             = lookup(each.value, "pod_aware", local.defaults.apic.tenants.services.redirect_policies.pod_aware)
-  resilient_hashing     = lookup(each.value, "resilient_hashing", local.defaults.apic.tenants.services.redirect_policies.resilient_hashing)
-  threshold_down_action = lookup(each.value, "threshold_down_action", local.defaults.apic.tenants.services.redirect_policies.threshold_down_action)
+  for_each               = { for policy in lookup(lookup(local.tenant, "services", {}), "redirect_policies", []) : policy.name => policy if lookup(local.modules, "aci_redirect_policy", true) }
+  tenant                 = module.aci_tenant[0].name
+  name                   = "${each.value.name}${local.defaults.apic.tenants.services.redirect_policies.name_suffix}"
+  alias                  = lookup(each.value, "alias", "")
+  description            = lookup(each.value, "description", "")
+  anycast                = lookup(each.value, "anycast", local.defaults.apic.tenants.services.redirect_policies.anycast)
+  type                   = lookup(each.value, "type", local.defaults.apic.tenants.services.redirect_policies.type)
+  hashing                = lookup(each.value, "hashing", local.defaults.apic.tenants.services.redirect_policies.hashing)
+  threshold              = lookup(each.value, "threshold", local.defaults.apic.tenants.services.redirect_policies.threshold)
+  max_threshold          = lookup(each.value, "max_threshold", local.defaults.apic.tenants.services.redirect_policies.max_threshold)
+  min_threshold          = lookup(each.value, "min_threshold", local.defaults.apic.tenants.services.redirect_policies.min_threshold)
+  pod_aware              = lookup(each.value, "pod_aware", local.defaults.apic.tenants.services.redirect_policies.pod_aware)
+  resilient_hashing      = lookup(each.value, "resilient_hashing", local.defaults.apic.tenants.services.redirect_policies.resilient_hashing)
+  threshold_down_action  = lookup(each.value, "threshold_down_action", local.defaults.apic.tenants.services.redirect_policies.threshold_down_action)
+  ip_sla_policy          = lookup(each.value, "ip_sla_policy", null) != null ? "${each.value.ip_sla_policy}${local.defaults.apic.tenants.policies.ip_sla_policies.name_suffix}" : ""
+  redirect_backup_policy = lookup(each.value, "redirect_backup_policy", null) != null ? "${each.value.redirect_backup_policy}${local.defaults.apic.tenants.policies.redirect_backup_policies.name_suffix}" : ""
   l3_destinations = [for dest in lookup(each.value, "l3_destinations", []) : {
-    description = lookup(dest, "description", "")
-    ip          = dest.ip
-    ip_2        = lookup(dest, "ip_2", null)
-    mac         = dest.mac
-    pod_id      = lookup(dest, "pod", local.defaults.apic.tenants.services.redirect_policies.l3_destinations.pod)
+    description           = lookup(dest, "description", "")
+    ip                    = dest.ip
+    ip_2                  = lookup(dest, "ip_2", null)
+    mac                   = dest.mac
+    pod_id                = lookup(dest, "pod", local.defaults.apic.tenants.services.redirect_policies.l3_destinations.pod)
+    redirect_health_group = lookup(dest, "redirect_health_group", null) != null ? "${dest.redirect_health_group}${local.defaults.apic.tenants.policies.redirect_health_groups.name_suffix}" : ""
   }]
 }
 

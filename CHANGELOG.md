@@ -2,6 +2,7 @@
 
 - Fix BGP peer address family attribute order for L3out node profiles
 - Add additional attributes to set rules
+- Add additional attributes to redirect policies
 
 ## 0.2.3
 

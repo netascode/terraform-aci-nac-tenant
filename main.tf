@@ -1152,7 +1152,7 @@ module "aci_l4l7_device" {
 
 module "aci_redirect_policy" {
   source  = "netascode/redirect-policy/aci"
-  version = ">= 0.2.0"
+  version = ">= 0.2.1"
 
   for_each               = { for policy in lookup(lookup(local.tenant, "services", {}), "redirect_policies", []) : policy.name => policy if lookup(local.modules, "aci_redirect_policy", true) }
   tenant                 = module.aci_tenant[0].name

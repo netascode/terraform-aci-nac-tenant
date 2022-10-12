@@ -1043,6 +1043,25 @@ module "aci_dhcp_option_policy" {
   options     = lookup(each.value, "options", [])
 }
 
+module "aci_route_control_route_map" {
+  source  = "netascode/route-control-route-map/aci"
+  version = ">= 0.1.0"
+
+  for_each    = { for rm in lookup(lookup(local.tenant, "policies", {}), "route_control_route_maps", []) : rm.name => rm if lookup(local.modules, "aci_route_control_route_map", true) }
+  tenant      = module.aci_tenant[0].name
+  name        = "${each.value.name}${local.defaults.apic.tenants.policies.route_control_route_maps.name_suffix}"
+  description = lookup(each.value, "description", "")
+  contexts = [for ctx in lookup(each.value, "contexts", []) : {
+      name        = "${ctx.name}${local.defaults.apic.tenants.policies.route_control_route_maps.contexts.name_suffix}"
+      description = lookup(ctx, "description", "")
+      action      = lookup(ctx, "action", local.defaults.apic.tenants.policies.route_control_route_maps.contexts.action)
+      order       = lookup(ctx, "order", local.defaults.apic.tenants.policies.route_control_route_maps.contexts.order)
+      set_rule    = lookup(ctx, "set_rule", null) != null ? "${each.value.set_rule}${local.defaults.apic.tenants.policies.set_rules.name_suffix}" : ""
+      match_rules = [ for mr in lookup(ctx, "match_rules", []): "${rm}${local.defaults.apic.tenants.policies.match_rules.name_suffix}"]
+  }]
+  
+}
+
 module "aci_match_rule" {
   source  = "netascode/match-rule/aci"
   version = ">= 0.2.0"

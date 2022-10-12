@@ -1064,12 +1064,35 @@ module "aci_set_rule" {
   source  = "netascode/set-rule/aci"
   version = ">= 0.1.0"
 
-  for_each       = { for rule in lookup(lookup(local.tenant, "policies", {}), "set_rules", []) : rule.name => rule if lookup(local.modules, "aci_set_rule", true) }
-  tenant         = module.aci_tenant[0].name
-  name           = "${each.value.name}${local.defaults.apic.tenants.policies.set_rules.name_suffix}"
-  description    = lookup(each.value, "description", "")
-  community      = lookup(each.value, "community", "")
-  community_mode = lookup(each.value, "community_mode", local.defaults.apic.tenants.policies.set_rules.community_mode)
+  for_each                    = { for rule in lookup(lookup(local.tenant, "policies", {}), "set_rules", []) : rule.name => rule if lookup(local.modules, "aci_set_rule", true) }
+  tenant                      = module.aci_tenant[0].name
+  name                        = "${each.value.name}${local.defaults.apic.tenants.policies.set_rules.name_suffix}"
+  description                 = lookup(each.value, "description", "")
+  community                   = lookup(each.value, "community", "")
+  community_mode              = lookup(each.value, "community_mode", local.defaults.apic.tenants.policies.set_rules.community_mode)
+  dampening                   = lookup(lookup(each.value, "dampening ", {}), "half_life", null) != null || lookup(lookup(each.value, "dampening ", {}), "max_suppress_time", null) != null || lookup(lookup(each.value, "dampening ", {}), "reuse_limit", null) != null || lookup(lookup(each.value, "dampening ", {}), "suppress_limit", null) != null ? true : false
+  dampening_half_life         = lookup(lookup(each.value, "dampening ", {}), "half_life", local.defaults.apic.tenants.policies.set_rules.dampening.half_life)
+  dampening_max_suppress_time = lookup(lookup(each.value, "dampening ", {}), "max_suppress_time", local.defaults.apic.tenants.policies.set_rules.dampening.max_suppress_time)
+  dampening_reuse_limit       = lookup(lookup(each.value, "dampening ", {}), "reuse_limit", local.defaults.apic.tenants.policies.set_rules.dampening.reuse_limit)
+  dampening_suppress_limit    = lookup(lookup(each.value, "dampening ", {}), "suppress_limit", local.defaults.apic.tenants.policies.set_rules.dampening.suppress_limit)
+  weight                      = lookup(each.value, "weight", null)
+  next_hop                    = lookup(each.value, "next_hop", "")
+  metric                      = lookup(each.value, "metric", null)
+  preference                  = lookup(each.value, "next_hop", null)
+  metric_type                 = lookup(each.value, "metric_type", "")
+  additional_communities = [
+    for comm in lookup(each.value, "additional_communities", []) : {
+      community   = comm.community
+      description = lookup(comm, "description", "")
+    }
+  ]
+  set_as_path          = lookup(lookup(each.value, "set_as_path ", {}), "criteria", null) != null || lookup(lookup(each.value, "set_as_path ", {}), "count", null) != null || lookup(lookup(each.value, "set_as_path ", {}), "order", null) != null ? true : false
+  set_as_path_criteria = lookup(lookup(each.value, "set_as_path ", {}), "criteria", local.defaults.apic.tenants.policies.set_rules.set_as_path.criteria)
+  set_as_path_count    = lookup(lookup(each.value, "set_as_path ", {}), "count", local.defaults.apic.tenants.policies.set_rules.set_as_path.count)
+  set_as_path_order    = lookup(lookup(each.value, "set_as_path ", {}), "order", local.defaults.apic.tenants.policies.set_rules.set_as_path.order)
+  set_as_path_asn      = lookup(lookup(each.value, "set_as_path ", {}), "asn", null)
+  next_hop_propagation = lookup(each.value, "next_hop_propagation", local.defaults.apic.tenants.policies.set_rules.next_hop_propagation)
+  multipath            = lookup(each.value, "multipath", local.defaults.apic.tenants.policies.set_rules.multipath)
 }
 
 module "aci_bfd_interface_policy" {

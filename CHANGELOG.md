@@ -5,6 +5,7 @@
 - Add additional attributes to redirect policies
 - Add `preferred_group` attribute to VRF
 - Add BGP address family context policies to VRF
+- Add IP SLA policy module
 
 ## 0.2.3
 

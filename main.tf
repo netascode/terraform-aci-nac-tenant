@@ -511,19 +511,21 @@ module "aci_vrf" {
   source  = "netascode/vrf/aci"
   version = ">= 0.1.0"
 
-  for_each                    = { for vrf in lookup(local.tenant, "vrfs", []) : vrf.name => vrf if lookup(local.modules, "aci_vrf", true) }
-  tenant                      = module.aci_tenant[0].name
-  name                        = "${each.value.name}${local.defaults.apic.tenants.vrfs.name_suffix}"
-  alias                       = lookup(each.value, "alias", "")
-  description                 = lookup(each.value, "description", "")
-  enforcement_direction       = lookup(each.value, "enforcement_direction", local.defaults.apic.tenants.vrfs.enforcement_direction)
-  enforcement_preference      = lookup(each.value, "enforcement_preference", local.defaults.apic.tenants.vrfs.enforcement_preference)
-  data_plane_learning         = lookup(each.value, "data_plane_learning", local.defaults.apic.tenants.vrfs.data_plane_learning)
-  contract_consumers          = lookup(lookup(each.value, "contracts", {}), "consumers", null) != null ? [for contract in each.value.contracts.consumers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
-  contract_providers          = lookup(lookup(each.value, "contracts", {}), "providers", null) != null ? [for contract in each.value.contracts.providers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
-  contract_imported_consumers = lookup(lookup(each.value, "contracts", {}), "imported_consumers", null) != null ? [for contract in each.value.contracts.imported_consumers : "${contract}${local.defaults.apic.tenants.imported_contracts.name_suffix}"] : []
-  bgp_timer_policy            = lookup(lookup(each.value, "bgp", {}), "timer_policy", null) != null ? "${each.value.bgp.timer_policy}${local.defaults.apic.tenants.policies.bgp_timer_policies.name_suffix}" : ""
-  dns_labels                  = lookup(each.value, "dns_labels", [])
+  for_each                               = { for vrf in lookup(local.tenant, "vrfs", []) : vrf.name => vrf if lookup(local.modules, "aci_vrf", true) }
+  tenant                                 = module.aci_tenant[0].name
+  name                                   = "${each.value.name}${local.defaults.apic.tenants.vrfs.name_suffix}"
+  alias                                  = lookup(each.value, "alias", "")
+  description                            = lookup(each.value, "description", "")
+  enforcement_direction                  = lookup(each.value, "enforcement_direction", local.defaults.apic.tenants.vrfs.enforcement_direction)
+  enforcement_preference                 = lookup(each.value, "enforcement_preference", local.defaults.apic.tenants.vrfs.enforcement_preference)
+  data_plane_learning                    = lookup(each.value, "data_plane_learning", local.defaults.apic.tenants.vrfs.data_plane_learning)
+  contract_consumers                     = lookup(lookup(each.value, "contracts", {}), "consumers", null) != null ? [for contract in each.value.contracts.consumers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
+  contract_providers                     = lookup(lookup(each.value, "contracts", {}), "providers", null) != null ? [for contract in each.value.contracts.providers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
+  contract_imported_consumers            = lookup(lookup(each.value, "contracts", {}), "imported_consumers", null) != null ? [for contract in each.value.contracts.imported_consumers : "${contract}${local.defaults.apic.tenants.imported_contracts.name_suffix}"] : []
+  bgp_timer_policy                       = lookup(lookup(each.value, "bgp", {}), "timer_policy", null) != null ? "${each.value.bgp.timer_policy}${local.defaults.apic.tenants.policies.bgp_timer_policies.name_suffix}" : ""
+  bgp_ipv4_address_family_context_policy = lookup(lookup(each.value, "bgp", {}), "ipv4_address_family_context_policy", null) != null ? "${each.value.bgp.ipv4_address_family_context_policy}${local.defaults.apic.tenants.policies.bgp_ipv4_address_family_context_policies.name_suffix}" : ""
+  bgp_ipv6_address_family_context_policy = lookup(lookup(each.value, "bgp", {}), "ipv6_address_family_context_policy", null) != null ? "${each.value.bgp.ipv6_address_family_context_policy}${local.defaults.apic.tenants.policies.bgp_ipv6_address_family_context_policies.name_suffix}" : ""
+  dns_labels                             = lookup(each.value, "dns_labels", [])
 
   depends_on = [
     module.aci_contract,

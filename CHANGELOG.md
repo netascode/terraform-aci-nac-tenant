@@ -1,6 +1,11 @@
 ## 0.2.4 (unreleased)
 
 - Fix BGP peer address family attribute order for L3out node profiles
+- Add additional attributes to set rules
+- Add additional attributes to redirect policies
+- Add `preferred_group` attribute to VRF
+- Add BGP address family context policies to VRF
+- Add IP SLA policy module
 
 ## 0.2.3
 

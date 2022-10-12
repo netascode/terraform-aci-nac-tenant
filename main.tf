@@ -509,21 +509,24 @@ module "aci_tenant" {
 
 module "aci_vrf" {
   source  = "netascode/vrf/aci"
-  version = ">= 0.1.0"
+  version = ">= 0.1.2"
 
-  for_each                    = { for vrf in lookup(local.tenant, "vrfs", []) : vrf.name => vrf if lookup(local.modules, "aci_vrf", true) }
-  tenant                      = module.aci_tenant[0].name
-  name                        = "${each.value.name}${local.defaults.apic.tenants.vrfs.name_suffix}"
-  alias                       = lookup(each.value, "alias", "")
-  description                 = lookup(each.value, "description", "")
-  enforcement_direction       = lookup(each.value, "enforcement_direction", local.defaults.apic.tenants.vrfs.enforcement_direction)
-  enforcement_preference      = lookup(each.value, "enforcement_preference", local.defaults.apic.tenants.vrfs.enforcement_preference)
-  data_plane_learning         = lookup(each.value, "data_plane_learning", local.defaults.apic.tenants.vrfs.data_plane_learning)
-  contract_consumers          = lookup(lookup(each.value, "contracts", {}), "consumers", null) != null ? [for contract in each.value.contracts.consumers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
-  contract_providers          = lookup(lookup(each.value, "contracts", {}), "providers", null) != null ? [for contract in each.value.contracts.providers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
-  contract_imported_consumers = lookup(lookup(each.value, "contracts", {}), "imported_consumers", null) != null ? [for contract in each.value.contracts.imported_consumers : "${contract}${local.defaults.apic.tenants.imported_contracts.name_suffix}"] : []
-  bgp_timer_policy            = lookup(lookup(each.value, "bgp", {}), "timer_policy", null) != null ? "${each.value.bgp.timer_policy}${local.defaults.apic.tenants.policies.bgp_timer_policies.name_suffix}" : ""
-  dns_labels                  = lookup(each.value, "dns_labels", [])
+  for_each                               = { for vrf in lookup(local.tenant, "vrfs", []) : vrf.name => vrf if lookup(local.modules, "aci_vrf", true) }
+  tenant                                 = module.aci_tenant[0].name
+  name                                   = "${each.value.name}${local.defaults.apic.tenants.vrfs.name_suffix}"
+  alias                                  = lookup(each.value, "alias", "")
+  description                            = lookup(each.value, "description", "")
+  enforcement_direction                  = lookup(each.value, "enforcement_direction", local.defaults.apic.tenants.vrfs.enforcement_direction)
+  enforcement_preference                 = lookup(each.value, "enforcement_preference", local.defaults.apic.tenants.vrfs.enforcement_preference)
+  data_plane_learning                    = lookup(each.value, "data_plane_learning", local.defaults.apic.tenants.vrfs.data_plane_learning)
+  contract_consumers                     = lookup(lookup(each.value, "contracts", {}), "consumers", null) != null ? [for contract in each.value.contracts.consumers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
+  contract_providers                     = lookup(lookup(each.value, "contracts", {}), "providers", null) != null ? [for contract in each.value.contracts.providers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
+  contract_imported_consumers            = lookup(lookup(each.value, "contracts", {}), "imported_consumers", null) != null ? [for contract in each.value.contracts.imported_consumers : "${contract}${local.defaults.apic.tenants.imported_contracts.name_suffix}"] : []
+  preferred_group                        = lookup(each.value, "preferred_group", local.defaults.apic.tenants.vrfs.preferred_group)
+  bgp_timer_policy                       = lookup(lookup(each.value, "bgp", {}), "timer_policy", null) != null ? "${each.value.bgp.timer_policy}${local.defaults.apic.tenants.policies.bgp_timer_policies.name_suffix}" : ""
+  bgp_ipv4_address_family_context_policy = lookup(lookup(each.value, "bgp", {}), "ipv4_address_family_context_policy", null) != null ? "${each.value.bgp.ipv4_address_family_context_policy}${local.defaults.apic.tenants.policies.bgp_ipv4_address_family_context_policies.name_suffix}" : ""
+  bgp_ipv6_address_family_context_policy = lookup(lookup(each.value, "bgp", {}), "ipv6_address_family_context_policy", null) != null ? "${each.value.bgp.ipv6_address_family_context_policy}${local.defaults.apic.tenants.policies.bgp_ipv6_address_family_context_policies.name_suffix}" : ""
+  dns_labels                             = lookup(each.value, "dns_labels", [])
 
   depends_on = [
     module.aci_contract,
@@ -1059,7 +1062,20 @@ module "aci_route_control_route_map" {
       set_rule    = lookup(ctx, "set_rule", null) != null ? "${each.value.set_rule}${local.defaults.apic.tenants.policies.set_rules.name_suffix}" : ""
       match_rules = [ for mr in lookup(ctx, "match_rules", []): "${rm}${local.defaults.apic.tenants.policies.match_rules.name_suffix}"]
   }]
+}
   
+module "aci_ip_sla_policy" {
+  source  = "netascode/ip-sla-policy/aci"
+  version = ">= 0.1.0"
+
+  for_each    = { for policy in lookup(lookup(local.tenant, "policies", {}), "ip_sla_policies", []) : policy.name => policy if lookup(local.modules, "ip_sla_policy", true) }
+  tenant      = module.aci_tenant[0].name
+  name        = "${each.value.name}${local.defaults.apic.tenants.policies.ip_sla_policies.name_suffix}"
+  description = lookup(each.value, "description", "")
+  multiplier  = lookup(each.value, "multiplier", local.defaults.apic.tenants.policies.ip_sla_policies.multiplier)
+  frequency   = lookup(each.value, "frequency", local.defaults.apic.tenants.policies.ip_sla_policies.frequency)
+  sla_type    = lookup(each.value, "sla_type", local.defaults.apic.tenants.policies.ip_sla_policies.sla_type)
+  port        = lookup(each.value, "port", local.defaults.apic.tenants.policies.ip_sla_policies.port)
 }
 
 module "aci_match_rule" {
@@ -1081,14 +1097,37 @@ module "aci_match_rule" {
 
 module "aci_set_rule" {
   source  = "netascode/set-rule/aci"
-  version = ">= 0.1.0"
+  version = ">= 0.2.1"
 
-  for_each       = { for rule in lookup(lookup(local.tenant, "policies", {}), "set_rules", []) : rule.name => rule if lookup(local.modules, "aci_set_rule", true) }
-  tenant         = module.aci_tenant[0].name
-  name           = "${each.value.name}${local.defaults.apic.tenants.policies.set_rules.name_suffix}"
-  description    = lookup(each.value, "description", "")
-  community      = lookup(each.value, "community", "")
-  community_mode = lookup(each.value, "community_mode", local.defaults.apic.tenants.policies.set_rules.community_mode)
+  for_each                    = { for rule in lookup(lookup(local.tenant, "policies", {}), "set_rules", []) : rule.name => rule if lookup(local.modules, "aci_set_rule", true) }
+  tenant                      = module.aci_tenant[0].name
+  name                        = "${each.value.name}${local.defaults.apic.tenants.policies.set_rules.name_suffix}"
+  description                 = lookup(each.value, "description", "")
+  community                   = lookup(each.value, "community", "")
+  community_mode              = lookup(each.value, "community_mode", local.defaults.apic.tenants.policies.set_rules.community_mode)
+  dampening                   = lookup(lookup(each.value, "dampening ", {}), "half_life", null) != null || lookup(lookup(each.value, "dampening ", {}), "max_suppress_time", null) != null || lookup(lookup(each.value, "dampening ", {}), "reuse_limit", null) != null || lookup(lookup(each.value, "dampening ", {}), "suppress_limit", null) != null ? true : false
+  dampening_half_life         = lookup(lookup(each.value, "dampening ", {}), "half_life", local.defaults.apic.tenants.policies.set_rules.dampening.half_life)
+  dampening_max_suppress_time = lookup(lookup(each.value, "dampening ", {}), "max_suppress_time", local.defaults.apic.tenants.policies.set_rules.dampening.max_suppress_time)
+  dampening_reuse_limit       = lookup(lookup(each.value, "dampening ", {}), "reuse_limit", local.defaults.apic.tenants.policies.set_rules.dampening.reuse_limit)
+  dampening_suppress_limit    = lookup(lookup(each.value, "dampening ", {}), "suppress_limit", local.defaults.apic.tenants.policies.set_rules.dampening.suppress_limit)
+  weight                      = lookup(each.value, "weight", null)
+  next_hop                    = lookup(each.value, "next_hop", "")
+  metric                      = lookup(each.value, "metric", null)
+  preference                  = lookup(each.value, "next_hop", null)
+  metric_type                 = lookup(each.value, "metric_type", "")
+  additional_communities = [
+    for comm in lookup(each.value, "additional_communities", []) : {
+      community   = comm.community
+      description = lookup(comm, "description", "")
+    }
+  ]
+  set_as_path          = lookup(lookup(each.value, "set_as_path ", {}), "criteria", null) != null || lookup(lookup(each.value, "set_as_path ", {}), "count", null) != null || lookup(lookup(each.value, "set_as_path ", {}), "order", null) != null ? true : false
+  set_as_path_criteria = lookup(lookup(each.value, "set_as_path ", {}), "criteria", local.defaults.apic.tenants.policies.set_rules.set_as_path.criteria)
+  set_as_path_count    = lookup(lookup(each.value, "set_as_path ", {}), "count", local.defaults.apic.tenants.policies.set_rules.set_as_path.count)
+  set_as_path_order    = lookup(lookup(each.value, "set_as_path ", {}), "order", local.defaults.apic.tenants.policies.set_rules.set_as_path.order)
+  set_as_path_asn      = lookup(lookup(each.value, "set_as_path ", {}), "asn", null)
+  next_hop_propagation = lookup(each.value, "next_hop_propagation", local.defaults.apic.tenants.policies.set_rules.next_hop_propagation)
+  multipath            = lookup(each.value, "multipath", local.defaults.apic.tenants.policies.set_rules.multipath)
 }
 
 module "aci_bfd_interface_policy" {
@@ -1148,28 +1187,31 @@ module "aci_l4l7_device" {
 
 module "aci_redirect_policy" {
   source  = "netascode/redirect-policy/aci"
-  version = ">= 0.2.0"
+  version = ">= 0.2.1"
 
-  for_each              = { for policy in lookup(lookup(local.tenant, "services", {}), "redirect_policies", []) : policy.name => policy if lookup(local.modules, "aci_redirect_policy", true) }
-  tenant                = module.aci_tenant[0].name
-  name                  = "${each.value.name}${local.defaults.apic.tenants.services.redirect_policies.name_suffix}"
-  alias                 = lookup(each.value, "alias", "")
-  description           = lookup(each.value, "description", "")
-  anycast               = lookup(each.value, "anycast", local.defaults.apic.tenants.services.redirect_policies.anycast)
-  type                  = lookup(each.value, "type", local.defaults.apic.tenants.services.redirect_policies.type)
-  hashing               = lookup(each.value, "hashing", local.defaults.apic.tenants.services.redirect_policies.hashing)
-  threshold             = lookup(each.value, "threshold", local.defaults.apic.tenants.services.redirect_policies.threshold)
-  max_threshold         = lookup(each.value, "max_threshold", local.defaults.apic.tenants.services.redirect_policies.max_threshold)
-  min_threshold         = lookup(each.value, "min_threshold", local.defaults.apic.tenants.services.redirect_policies.min_threshold)
-  pod_aware             = lookup(each.value, "pod_aware", local.defaults.apic.tenants.services.redirect_policies.pod_aware)
-  resilient_hashing     = lookup(each.value, "resilient_hashing", local.defaults.apic.tenants.services.redirect_policies.resilient_hashing)
-  threshold_down_action = lookup(each.value, "threshold_down_action", local.defaults.apic.tenants.services.redirect_policies.threshold_down_action)
+  for_each               = { for policy in lookup(lookup(local.tenant, "services", {}), "redirect_policies", []) : policy.name => policy if lookup(local.modules, "aci_redirect_policy", true) }
+  tenant                 = module.aci_tenant[0].name
+  name                   = "${each.value.name}${local.defaults.apic.tenants.services.redirect_policies.name_suffix}"
+  alias                  = lookup(each.value, "alias", "")
+  description            = lookup(each.value, "description", "")
+  anycast                = lookup(each.value, "anycast", local.defaults.apic.tenants.services.redirect_policies.anycast)
+  type                   = lookup(each.value, "type", local.defaults.apic.tenants.services.redirect_policies.type)
+  hashing                = lookup(each.value, "hashing", local.defaults.apic.tenants.services.redirect_policies.hashing)
+  threshold              = lookup(each.value, "threshold", local.defaults.apic.tenants.services.redirect_policies.threshold)
+  max_threshold          = lookup(each.value, "max_threshold", local.defaults.apic.tenants.services.redirect_policies.max_threshold)
+  min_threshold          = lookup(each.value, "min_threshold", local.defaults.apic.tenants.services.redirect_policies.min_threshold)
+  pod_aware              = lookup(each.value, "pod_aware", local.defaults.apic.tenants.services.redirect_policies.pod_aware)
+  resilient_hashing      = lookup(each.value, "resilient_hashing", local.defaults.apic.tenants.services.redirect_policies.resilient_hashing)
+  threshold_down_action  = lookup(each.value, "threshold_down_action", local.defaults.apic.tenants.services.redirect_policies.threshold_down_action)
+  ip_sla_policy          = lookup(each.value, "ip_sla_policy", null) != null ? "${each.value.ip_sla_policy}${local.defaults.apic.tenants.policies.ip_sla_policies.name_suffix}" : ""
+  redirect_backup_policy = lookup(each.value, "redirect_backup_policy", null) != null ? "${each.value.redirect_backup_policy}${local.defaults.apic.tenants.policies.redirect_backup_policies.name_suffix}" : ""
   l3_destinations = [for dest in lookup(each.value, "l3_destinations", []) : {
-    description = lookup(dest, "description", "")
-    ip          = dest.ip
-    ip_2        = lookup(dest, "ip_2", null)
-    mac         = dest.mac
-    pod_id      = lookup(dest, "pod", local.defaults.apic.tenants.services.redirect_policies.l3_destinations.pod)
+    description           = lookup(dest, "description", "")
+    ip                    = dest.ip
+    ip_2                  = lookup(dest, "ip_2", null)
+    mac                   = dest.mac
+    pod_id                = lookup(dest, "pod", local.defaults.apic.tenants.services.redirect_policies.l3_destinations.pod)
+    redirect_health_group = lookup(dest, "redirect_health_group", null) != null ? "${dest.redirect_health_group}${local.defaults.apic.tenants.policies.redirect_health_groups.name_suffix}" : ""
   }]
 }
 

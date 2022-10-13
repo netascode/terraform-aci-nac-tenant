@@ -1250,14 +1250,14 @@ module "aci_redirect_policy" {
   resilient_hashing      = lookup(each.value, "resilient_hashing", local.defaults.apic.tenants.services.redirect_policies.resilient_hashing)
   threshold_down_action  = lookup(each.value, "threshold_down_action", local.defaults.apic.tenants.services.redirect_policies.threshold_down_action)
   ip_sla_policy          = lookup(each.value, "ip_sla_policy", null) != null ? "${each.value.ip_sla_policy}${local.defaults.apic.tenants.policies.ip_sla_policies.name_suffix}" : ""
-  redirect_backup_policy = lookup(each.value, "redirect_backup_policy", null) != null ? "${each.value.redirect_backup_policy}${local.defaults.apic.tenants.policies.redirect_backup_policies.name_suffix}" : ""
+  redirect_backup_policy = lookup(each.value, "redirect_backup_policy", null) != null ? "${each.value.redirect_backup_policy}${local.defaults.apic.tenants.services.redirect_backup_policies.name_suffix}" : ""
   l3_destinations = [for dest in lookup(each.value, "l3_destinations", []) : {
     description           = lookup(dest, "description", "")
     ip                    = dest.ip
     ip_2                  = lookup(dest, "ip_2", null)
     mac                   = dest.mac
     pod_id                = lookup(dest, "pod", local.defaults.apic.tenants.services.redirect_policies.l3_destinations.pod)
-    redirect_health_group = lookup(dest, "redirect_health_group", null) != null ? "${dest.redirect_health_group}${local.defaults.apic.tenants.policies.redirect_health_groups.name_suffix}" : ""
+    redirect_health_group = lookup(dest, "redirect_health_group", null) != null ? "${dest.redirect_health_group}${local.defaults.apic.tenants.services.redirect_health_groups.name_suffix}" : ""
   }]
 }
 

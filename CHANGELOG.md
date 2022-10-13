@@ -6,6 +6,7 @@
 - Add `preferred_group` attribute to VRF
 - Add BGP address family context policies to VRF
 - Add IP SLA policy module
+- Add BGP address family context policy module
 
 ## 0.2.3
 

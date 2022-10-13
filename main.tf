@@ -1163,6 +1163,35 @@ module "aci_bfd_interface_policy" {
   min_tx_interval           = lookup(each.value, "min_tx_interval", local.defaults.apic.tenants.policies.bfd_interface_policies.min_tx_interval)
 }
 
+module "aci_qos_policy" {
+  source  = "netascode/qos-policy/aci"
+  version = ">= 0.1.0"
+
+  for_each    = { for pol in lookup(lookup(local.tenant, "policies", {}), "qos", []) : pol.name => pol if lookup(local.modules, "aci_qos_policy", true) }
+  tenant      = module.aci_tenant[0].name
+  name        = "${each.value.name}${local.defaults.apic.tenants.policies.qos.name_suffix}"
+  description = lookup(each.value, "description", "")
+  alias       = lookup(each.value, "alias", "")
+  dscp_priority_maps = [
+    for map in lookup(each.value, "dscp_priority_maps", []) : {
+      dscp_from   = map.dscp_from
+      dscp_to     = map.dscp_to
+      priority    = lookup(map, "priority", local.defaults.apic.tenants.policies.qos.dscp_priority_maps.priority)
+      dscp_target = lookup(map, "dscp_target", local.defaults.apic.tenants.policies.qos.dscp_priority_maps.dscp_target)
+      cos_target  = lookup(map, "cos_target", local.defaults.apic.tenants.policies.qos.dscp_priority_maps.cos_target)
+    }
+  ]
+  dot1p_classifiers = [
+    for c in lookup(each.value, "dot1p_classifiers", []) : {
+      dot1p_from  = c.dot1p_from
+      dot1p_to    = c.dot1p_to
+      priority    = lookup(c, "priority", local.defaults.apic.tenants.policies.qos.dot1p_classifiers.priority)
+      dscp_target = lookup(c, "dscp_target", local.defaults.apic.tenants.policies.qos.dot1p_classifiers.dscp_target)
+      cos_target  = lookup(c, "cos_target", local.defaults.apic.tenants.policies.qos.dot1p_classifiers.cos_target)
+    }
+  ]
+}
+
 module "aci_l4l7_device" {
   source  = "netascode/l4l7-device/aci"
   version = ">= 0.2.0"

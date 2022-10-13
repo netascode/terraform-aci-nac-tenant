@@ -10,6 +10,7 @@
 - Add redirect health group module
 - Add route control route map module
 - Add QoS policy module
+- Add SPAN destination group module
 
 ## 0.2.3
 

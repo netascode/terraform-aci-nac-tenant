@@ -1077,7 +1077,7 @@ module "aci_route_control_route_map" {
     action      = lookup(ctx, "action", local.defaults.apic.tenants.policies.route_control_route_maps.contexts.action)
     order       = lookup(ctx, "order", local.defaults.apic.tenants.policies.route_control_route_maps.contexts.order)
     set_rule    = lookup(ctx, "set_rule", null) != null ? "${each.value.set_rule}${local.defaults.apic.tenants.policies.set_rules.name_suffix}" : ""
-    match_rules = [for mr in lookup(ctx, "match_rules", []) : "${rm}${local.defaults.apic.tenants.policies.match_rules.name_suffix}"]
+    match_rules = [for mr in lookup(ctx, "match_rules", []) : "${mr}${local.defaults.apic.tenants.policies.match_rules.name_suffix}"]
   }]
 }
 

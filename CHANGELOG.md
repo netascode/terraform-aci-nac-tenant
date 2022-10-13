@@ -8,6 +8,7 @@
 - Add IP SLA policy module
 - Add BGP address family context policy module
 - Add redirect health group module
+- Add route control route map module
 
 ## 0.2.3
 

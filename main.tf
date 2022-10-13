@@ -1214,6 +1214,15 @@ module "aci_redirect_policy" {
   }]
 }
 
+module "aci_redirect_health_group" {
+  source      = "netascode/redirect-health-group/aci"
+  version     = ">= 0.1.0"
+  for_each    = { for health_group in lookup(lookup(local.tenant, "services", {}), "redirect_health_groups", []) : health_group.name => health_group if lookup(local.modules, "aci_redirect_health_group", true) }
+  tenant      = module.aci_tenant[0].name
+  name        = "${each.value.name}${local.defaults.apic.tenants.services.redirect_health_groups.name_suffix}"
+  description = lookup(each.value, "description", "")
+}
+
 module "aci_service_graph_template" {
   source  = "netascode/service-graph-template/aci"
   version = ">= 0.1.0"

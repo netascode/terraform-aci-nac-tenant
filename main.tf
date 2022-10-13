@@ -910,9 +910,9 @@ module "aci_filter" {
     ethertype             = lookup(entry, "ethertype", local.defaults.apic.tenants.filters.entries.ethertype)
     protocol              = lookup(entry, "protocol", local.defaults.apic.tenants.filters.entries.protocol)
     source_from_port      = lookup(entry, "source_from_port", local.defaults.apic.tenants.filters.entries.source_from_port)
-    source_to_port        = lookup(entry, "source_to_port", lookup(entry, "source_from_port", local.defaults.apic.tenants.filters.entries.source_to_port))
+    source_to_port        = lookup(entry, "source_to_port", lookup(entry, "source_from_port", local.defaults.apic.tenants.filters.entries.source_from_port))
     destination_from_port = lookup(entry, "destination_from_port", local.defaults.apic.tenants.filters.entries.destination_from_port)
-    destination_to_port   = lookup(entry, "destination_to_port", lookup(entry, "destination_from_port", local.defaults.apic.tenants.filters.entries.destination_to_port))
+    destination_to_port   = lookup(entry, "destination_to_port", lookup(entry, "destination_from_port", local.defaults.apic.tenants.filters.entries.destination_from_port))
     stateful              = lookup(entry, "stateful", local.defaults.apic.tenants.filters.entries.stateful)
   }]
 }

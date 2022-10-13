@@ -1028,7 +1028,7 @@ module "aci_bgp_address_family_context_policy" {
   ebgp_distance          = lookup(each.value, "ebgp_distance", local.defaults.apic.tenants.policies.bgp_address_family_context_policies.ebgp_distance)
   ibgp_distance          = lookup(each.value, "ibgp_distance", local.defaults.apic.tenants.policies.bgp_address_family_context_policies.ibgp_distance)
   local_distance         = lookup(each.value, "local_distance", local.defaults.apic.tenants.policies.bgp_address_family_context_policies.local_distance)
-  local_max_ecmp         = lookup(each.value, "local_max_ecmp", local.defaults.apic.tenants.policies.bgp_address_family_context_policies.local_max_ecmp)
+  local_max_ecmp         = lookup(each.value, "local_max_ecmp", 0)
   ebgp_max_ecmp          = lookup(each.value, "ebgp_max_ecmp", local.defaults.apic.tenants.policies.bgp_address_family_context_policies.ebgp_max_ecmp)
   ibgp_max_ecmp          = lookup(each.value, "ibgp_max_ecmp", local.defaults.apic.tenants.policies.bgp_address_family_context_policies.ibgp_max_ecmp)
 }
@@ -1076,7 +1076,7 @@ module "aci_route_control_route_map" {
     description = lookup(ctx, "description", "")
     action      = lookup(ctx, "action", local.defaults.apic.tenants.policies.route_control_route_maps.contexts.action)
     order       = lookup(ctx, "order", local.defaults.apic.tenants.policies.route_control_route_maps.contexts.order)
-    set_rule    = lookup(ctx, "set_rule", null) != null ? "${each.value.set_rule}${local.defaults.apic.tenants.policies.set_rules.name_suffix}" : ""
+    set_rule    = lookup(ctx, "set_rule", null) != null ? "${ctx.set_rule}${local.defaults.apic.tenants.policies.set_rules.name_suffix}" : ""
     match_rules = [for mr in lookup(ctx, "match_rules", []) : "${mr}${local.defaults.apic.tenants.policies.match_rules.name_suffix}"]
   }]
 }
@@ -1130,7 +1130,7 @@ module "aci_set_rule" {
   weight                      = lookup(each.value, "weight", null)
   next_hop                    = lookup(each.value, "next_hop", "")
   metric                      = lookup(each.value, "metric", null)
-  preference                  = lookup(each.value, "next_hop", null)
+  preference                  = lookup(each.value, "preference", null)
   metric_type                 = lookup(each.value, "metric_type", "")
   additional_communities = [
     for comm in lookup(each.value, "additional_communities", []) : {

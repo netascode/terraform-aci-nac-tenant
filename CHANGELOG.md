@@ -9,6 +9,7 @@
 - Add BGP address family context policy module
 - Add redirect health group module
 - Add route control route map module
+- Add QoS policy module
 
 ## 0.2.3
 

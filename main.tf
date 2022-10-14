@@ -752,11 +752,12 @@ module "aci_l3out_node_profile_manual" {
   source  = "netascode/l3out-node-profile/aci"
   version = ">= 0.2.2"
 
-  for_each = { for np in local.node_profiles_manual : np.key => np.value if lookup(local.modules, "aci_l3out_node_profile", true) }
-  tenant   = module.aci_tenant[0].name
-  l3out    = each.value.l3out
-  name     = each.value.name
-  nodes    = each.value.nodes
+  for_each  = { for np in local.node_profiles_manual : np.key => np.value if lookup(local.modules, "aci_l3out_node_profile", true) }
+  tenant    = module.aci_tenant[0].name
+  l3out     = each.value.l3out
+  name      = each.value.name
+  nodes     = each.value.nodes
+  bgp_peers = each.value.bgp_peers
 
   depends_on = [
     module.aci_l3out,
@@ -767,11 +768,12 @@ module "aci_l3out_node_profile_auto" {
   source  = "netascode/l3out-node-profile/aci"
   version = ">= 0.2.2"
 
-  for_each = { for np in local.node_profiles_auto : np.name => np if lookup(local.modules, "aci_l3out_node_profile", true) }
-  tenant   = module.aci_tenant[0].name
-  l3out    = each.value.l3out
-  name     = each.value.name
-  nodes    = each.value.nodes
+  for_each  = { for np in local.node_profiles_auto : np.name => np if lookup(local.modules, "aci_l3out_node_profile", true) }
+  tenant    = module.aci_tenant[0].name
+  l3out     = each.value.l3out
+  name      = each.value.name
+  nodes     = each.value.nodes
+  bgp_peers = each.value.bgp_peers
 
   depends_on = [
     module.aci_l3out,

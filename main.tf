@@ -1124,6 +1124,7 @@ module "aci_set_rule" {
   description                 = lookup(each.value, "description", "")
   community                   = lookup(each.value, "community", "")
   community_mode              = lookup(each.value, "community_mode", local.defaults.apic.tenants.policies.set_rules.community_mode)
+  tag                         = lookup(each.value, "tag", null)
   dampening                   = lookup(lookup(each.value, "dampening ", {}), "half_life", null) != null || lookup(lookup(each.value, "dampening ", {}), "max_suppress_time", null) != null || lookup(lookup(each.value, "dampening ", {}), "reuse_limit", null) != null || lookup(lookup(each.value, "dampening ", {}), "suppress_limit", null) != null ? true : false
   dampening_half_life         = lookup(lookup(each.value, "dampening ", {}), "half_life", local.defaults.apic.tenants.policies.set_rules.dampening.half_life)
   dampening_max_suppress_time = lookup(lookup(each.value, "dampening ", {}), "max_suppress_time", local.defaults.apic.tenants.policies.set_rules.dampening.max_suppress_time)

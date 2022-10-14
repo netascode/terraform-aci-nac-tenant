@@ -1168,7 +1168,7 @@ module "aci_bfd_interface_policy" {
 
 module "aci_qos_policy" {
   source  = "netascode/qos-policy/aci"
-  version = ">= 0.1.1"
+  version = ">= 0.1.2"
 
   for_each    = { for pol in lookup(lookup(local.tenant, "policies", {}), "qos", []) : pol.name => pol if lookup(local.modules, "aci_qos_policy", true) }
   tenant      = module.aci_tenant[0].name

@@ -133,7 +133,7 @@ locals {
       ),
     ])
     ospf                                    = lookup(l3out, "ospf", null) != null ? true : false
-    ospf_area                               = try(tonumber(lookup(lookup(l3out, "ospf", {}), "area", "backbone")), false) == true ? "0.0.0.${tonumber(lookup(lookup(l3out, "ospf", {}), "area", "backbone"))}" : "backbone"
+    ospf_area                               = try(tonumber(lookup(lookup(l3out, "ospf", {}), "area", "backbone")), false) != false ? "0.0.0.${tonumber(lookup(lookup(l3out, "ospf", {}), "area", "backbone"))}" : "backbone"
     ospf_area_cost                          = lookup(lookup(l3out, "ospf", {}), "area_cost", local.defaults.apic.tenants.l3outs.ospf.area_cost)
     ospf_area_type                          = lookup(lookup(l3out, "ospf", {}), "area_type", local.defaults.apic.tenants.l3outs.ospf.area_type)
     l3_multicast_ipv4                       = lookup(l3out, "l3_multicast_ipv4", local.defaults.apic.tenants.l3outs.l3_multicast_ipv4)

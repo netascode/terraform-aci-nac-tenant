@@ -195,34 +195,34 @@ locals {
               type       = lookup(nh, "type", local.defaults.apic.tenants.l3outs.node_profiles.nodes.static_routes.next_hops.type)
             }]
           }]
-          bgp_peers = [for peer in lookup(node, "bgp_peers", []) : {
-            ip                               = peer.ip
-            remote_as                        = peer.remote_as
-            description                      = lookup(peer, "description", "")
-            allow_self_as                    = lookup(peer, "allow_self_as", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.allow_self_as)
-            as_override                      = lookup(peer, "as_override", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.as_override)
-            disable_peer_as_check            = lookup(peer, "disable_peer_as_check", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.disable_peer_as_check)
-            next_hop_self                    = lookup(peer, "next_hop_self", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.next_hop_self)
-            send_community                   = lookup(peer, "send_community", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.send_community)
-            send_ext_community               = lookup(peer, "send_ext_community", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.send_ext_community)
-            password                         = lookup(peer, "password", null)
-            allowed_self_as_count            = lookup(peer, "allowed_self_as_count", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.allowed_self_as_count)
-            bfd                              = lookup(peer, "bfd", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.bfd)
-            disable_connected_check          = lookup(peer, "disable_connected_check", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.disable_connected_check)
-            ttl                              = lookup(peer, "ttl", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.ttl)
-            weight                           = lookup(peer, "weight", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.weight)
-            remove_all_private_as            = lookup(peer, "remove_all_private_as", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.remove_all_private_as)
-            remove_private_as                = lookup(peer, "remove_private_as", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.remove_private_as)
-            replace_private_as_with_local_as = lookup(peer, "replace_private_as_with_local_as", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.replace_private_as_with_local_as)
-            unicast_address_family           = lookup(peer, "unicast_address_family", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.unicast_address_family)
-            multicast_address_family         = lookup(peer, "multicast_address_family", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.multicast_address_family)
-            admin_state                      = lookup(peer, "admin_state", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.admin_state)
-            local_as                         = lookup(peer, "local_as", null)
-            as_propagate                     = lookup(peer, "as_propagate", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.as_propagate)
-            peer_prefix_policy               = lookup(peer, "peer_prefix_policy", null) != null ? "${peer.peer_prefix_policy}${local.defaults.apic.tenants.policies.bgp_peer_prefix_policies.name_suffix}" : null
-            export_route_control             = lookup(peer, "export_route_control", null) != null ? "${peer.export_route_control}${local.defaults.apic.tenants.policies.route_control_route_maps.name_suffix}" : null
-            import_route_control             = lookup(peer, "import_route_control", null) != null ? "${peer.import_route_control}${local.defaults.apic.tenants.policies.route_control_route_maps.name_suffix}" : null
-          }]
+        }]
+        bgp_peers = [for peer in lookup(np, "bgp_peers", []) : {
+          ip                               = peer.ip
+          remote_as                        = peer.remote_as
+          description                      = lookup(peer, "description", "")
+          allow_self_as                    = lookup(peer, "allow_self_as", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.allow_self_as)
+          as_override                      = lookup(peer, "as_override", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.as_override)
+          disable_peer_as_check            = lookup(peer, "disable_peer_as_check", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.disable_peer_as_check)
+          next_hop_self                    = lookup(peer, "next_hop_self", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.next_hop_self)
+          send_community                   = lookup(peer, "send_community", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.send_community)
+          send_ext_community               = lookup(peer, "send_ext_community", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.send_ext_community)
+          password                         = lookup(peer, "password", null)
+          allowed_self_as_count            = lookup(peer, "allowed_self_as_count", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.allowed_self_as_count)
+          bfd                              = lookup(peer, "bfd", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.bfd)
+          disable_connected_check          = lookup(peer, "disable_connected_check", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.disable_connected_check)
+          ttl                              = lookup(peer, "ttl", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.ttl)
+          weight                           = lookup(peer, "weight", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.weight)
+          remove_all_private_as            = lookup(peer, "remove_all_private_as", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.remove_all_private_as)
+          remove_private_as                = lookup(peer, "remove_private_as", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.remove_private_as)
+          replace_private_as_with_local_as = lookup(peer, "replace_private_as_with_local_as", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.replace_private_as_with_local_as)
+          unicast_address_family           = lookup(peer, "unicast_address_family", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.unicast_address_family)
+          multicast_address_family         = lookup(peer, "multicast_address_family", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.multicast_address_family)
+          admin_state                      = lookup(peer, "admin_state", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.admin_state)
+          local_as                         = lookup(peer, "local_as", null)
+          as_propagate                     = lookup(peer, "as_propagate", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.as_propagate)
+          peer_prefix_policy               = lookup(peer, "peer_prefix_policy", null) != null ? "${peer.peer_prefix_policy}${local.defaults.apic.tenants.policies.bgp_peer_prefix_policies.name_suffix}" : null
+          export_route_control             = lookup(peer, "export_route_control", null) != null ? "${peer.export_route_control}${local.defaults.apic.tenants.policies.route_control_route_maps.name_suffix}" : null
+          import_route_control             = lookup(peer, "import_route_control", null) != null ? "${peer.import_route_control}${local.defaults.apic.tenants.policies.route_control_route_maps.name_suffix}" : null
         }]
       }
     }]
@@ -248,34 +248,34 @@ locals {
           type       = lookup(nh, "type", local.defaults.apic.tenants.l3outs.nodes.static_routes.next_hops.type)
         }]
       }]
-      bgp_peers = [for peer in lookup(node, "bgp_peers", []) : {
-        ip                               = peer.ip
-        remote_as                        = peer.remote_as
-        description                      = lookup(peer, "description", "")
-        allow_self_as                    = lookup(peer, "allow_self_as", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.allow_self_as)
-        as_override                      = lookup(peer, "as_override", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.as_override)
-        disable_peer_as_check            = lookup(peer, "disable_peer_as_check", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.disable_peer_as_check)
-        next_hop_self                    = lookup(peer, "next_hop_self", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.next_hop_self)
-        send_community                   = lookup(peer, "send_community", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.send_community)
-        send_ext_community               = lookup(peer, "send_ext_community", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.send_ext_community)
-        password                         = lookup(peer, "password", null)
-        allowed_self_as_count            = lookup(peer, "allowed_self_as_count", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.allowed_self_as_count)
-        bfd                              = lookup(peer, "bfd", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.bfd)
-        disable_connected_check          = lookup(peer, "disable_connected_check", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.disable_connected_check)
-        ttl                              = lookup(peer, "ttl", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.ttl)
-        weight                           = lookup(peer, "weight", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.weight)
-        remove_all_private_as            = lookup(peer, "remove_all_private_as", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.remove_all_private_as)
-        remove_private_as                = lookup(peer, "remove_private_as", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.remove_private_as)
-        replace_private_as_with_local_as = lookup(peer, "replace_private_as_with_local_as", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.replace_private_as_with_local_as)
-        unicast_address_family           = lookup(peer, "unicast_address_family", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.unicast_address_family)
-        multicast_address_family         = lookup(peer, "multicast_address_family", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.multicast_address_family)
-        admin_state                      = lookup(peer, "admin_state", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.admin_state)
-        local_as                         = lookup(peer, "local_as", null)
-        as_propagate                     = lookup(peer, "as_propagate", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.as_propagate)
-        peer_prefix_policy               = lookup(peer, "peer_prefix_policy", null) != null ? "${peer.peer_prefix_policy}${local.defaults.apic.tenants.policies.bgp_peer_prefix_policies.name_suffix}" : null
-        export_route_control             = lookup(peer, "export_route_control", null) != null ? "${peer.export_route_control}${local.defaults.apic.tenants.policies.route_control_route_maps.name_suffix}" : null
-        import_route_control             = lookup(peer, "import_route_control", null) != null ? "${peer.import_route_control}${local.defaults.apic.tenants.policies.route_control_route_maps.name_suffix}" : null
-      }]
+    }]
+    bgp_peers = [for peer in lookup(l3out, "bgp_peers", []) : {
+      ip                               = peer.ip
+      remote_as                        = peer.remote_as
+      description                      = lookup(peer, "description", "")
+      allow_self_as                    = lookup(peer, "allow_self_as", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.allow_self_as)
+      as_override                      = lookup(peer, "as_override", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.as_override)
+      disable_peer_as_check            = lookup(peer, "disable_peer_as_check", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.disable_peer_as_check)
+      next_hop_self                    = lookup(peer, "next_hop_self", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.next_hop_self)
+      send_community                   = lookup(peer, "send_community", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.send_community)
+      send_ext_community               = lookup(peer, "send_ext_community", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.send_ext_community)
+      password                         = lookup(peer, "password", null)
+      allowed_self_as_count            = lookup(peer, "allowed_self_as_count", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.allowed_self_as_count)
+      bfd                              = lookup(peer, "bfd", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.bfd)
+      disable_connected_check          = lookup(peer, "disable_connected_check", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.disable_connected_check)
+      ttl                              = lookup(peer, "ttl", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.ttl)
+      weight                           = lookup(peer, "weight", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.weight)
+      remove_all_private_as            = lookup(peer, "remove_all_private_as", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.remove_all_private_as)
+      remove_private_as                = lookup(peer, "remove_private_as", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.remove_private_as)
+      replace_private_as_with_local_as = lookup(peer, "replace_private_as_with_local_as", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.replace_private_as_with_local_as)
+      unicast_address_family           = lookup(peer, "unicast_address_family", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.unicast_address_family)
+      multicast_address_family         = lookup(peer, "multicast_address_family", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.multicast_address_family)
+      admin_state                      = lookup(peer, "admin_state", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.admin_state)
+      local_as                         = lookup(peer, "local_as", null)
+      as_propagate                     = lookup(peer, "as_propagate", local.defaults.apic.tenants.l3outs.node_profiles.nodes.bgp_peers.as_propagate)
+      peer_prefix_policy               = lookup(peer, "peer_prefix_policy", null) != null ? "${peer.peer_prefix_policy}${local.defaults.apic.tenants.policies.bgp_peer_prefix_policies.name_suffix}" : null
+      export_route_control             = lookup(peer, "export_route_control", null) != null ? "${peer.export_route_control}${local.defaults.apic.tenants.policies.route_control_route_maps.name_suffix}" : null
+      import_route_control             = lookup(peer, "import_route_control", null) != null ? "${peer.import_route_control}${local.defaults.apic.tenants.policies.route_control_route_maps.name_suffix}" : null
     }]
   } if length(lookup(l3out, "nodes", [])) != 0]
 

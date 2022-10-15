@@ -10,11 +10,12 @@
 - Add redirect health group module
 - Add route control route map module
 - Add QoS policy module
+- Add custom QoS policy attribute to EPG
 
 ## 0.2.3
 
-- Add option to specific QoS class for external EPGs
-- Add option to specific target DSCP value for external EPGs
+- Add option to specify QoS class for external EPGs
+- Add option to specify target DSCP value for external EPGs
 - Add aggregate flags to subnet of external EPGs
 - Add option to enable IPv4 multicast for L3out
 - Add option to specify target DSCP for L3out

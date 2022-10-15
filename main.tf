@@ -782,7 +782,7 @@ module "aci_l3out_node_profile_auto" {
 
 module "aci_l3out_interface_profile_manual" {
   source  = "netascode/l3out-interface-profile/aci"
-  version = ">= 0.2.2"
+  version = ">= 0.2.3"
 
   for_each                    = { for ip in local.interface_profiles_manual : ip.key => ip.value if lookup(local.modules, "aci_l3out_interface_profile", true) }
   tenant                      = module.aci_tenant[0].name
@@ -828,7 +828,7 @@ module "aci_l3out_interface_profile_manual" {
 
 module "aci_l3out_interface_profile_auto" {
   source  = "netascode/l3out-interface-profile/aci"
-  version = ">= 0.2.2"
+  version = ">= 0.2.3"
 
   for_each                    = { for ip in local.interface_profiles_auto : ip.name => ip if lookup(local.modules, "aci_l3out_interface_profile", true) }
   tenant                      = module.aci_tenant[0].name

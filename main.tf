@@ -1116,7 +1116,7 @@ module "aci_match_rule" {
 
 module "aci_set_rule" {
   source  = "netascode/set-rule/aci"
-  version = ">= 0.2.1"
+  version = ">= 0.2.2"
 
   for_each                    = { for rule in lookup(lookup(local.tenant, "policies", {}), "set_rules", []) : rule.name => rule if lookup(local.modules, "aci_set_rule", true) }
   tenant                      = module.aci_tenant[0].name

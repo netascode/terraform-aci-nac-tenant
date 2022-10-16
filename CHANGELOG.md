@@ -1,4 +1,4 @@
-## 0.3.0 (unreleased)
+## 0.3.0
 
 - Fix BGP peer address family attribute order for L3out node profiles
 - Add additional attributes to set rules

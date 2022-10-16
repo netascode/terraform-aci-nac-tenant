@@ -32,7 +32,7 @@
 - Add support for floating SVI in L3out interface profiles
 - Add multiple options to BGP peers in L3out interface profiles
 - Fix default tenant for service graph templates and device selection policies
-- Make `community` and optional attribute of `set_rule`
+- Make `community` an optional attribute of `set_rule`
 
 ## 0.2.2
 

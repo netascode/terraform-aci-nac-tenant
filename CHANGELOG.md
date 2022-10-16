@@ -1,4 +1,4 @@
-## 0.2.4 (unreleased)
+## 0.3.0 (unreleased)
 
 - Fix BGP peer address family attribute order for L3out node profiles
 - Add additional attributes to set rules
@@ -11,6 +11,7 @@
 - Add route control route map module
 - Add QoS policy module
 - Add custom QoS policy attribute to EPG
+- Pin module dependencies
 
 ## 0.2.3
 

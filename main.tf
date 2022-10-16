@@ -500,7 +500,7 @@ locals {
 
 module "aci_tenant" {
   source  = "netascode/tenant/aci"
-  version = ">= 0.1.0"
+  version = "0.1.0"
 
   count       = lookup(local.modules, "aci_tenant", true) == false ? 0 : 1
   name        = local.tenant.name
@@ -510,7 +510,7 @@ module "aci_tenant" {
 
 module "aci_vrf" {
   source  = "netascode/vrf/aci"
-  version = ">= 0.1.3"
+  version = "0.1.3"
 
   for_each                               = { for vrf in lookup(local.tenant, "vrfs", []) : vrf.name => vrf if lookup(local.modules, "aci_vrf", true) }
   tenant                                 = module.aci_tenant[0].name
@@ -538,7 +538,7 @@ module "aci_vrf" {
 
 module "aci_bridge_domain" {
   source  = "netascode/bridge-domain/aci"
-  version = ">= 0.2.0"
+  version = "0.2.0"
 
   for_each                   = { for bd in lookup(local.tenant, "bridge_domains", []) : bd.name => bd if lookup(local.modules, "aci_bridge_domain", true) }
   tenant                     = module.aci_tenant[0].name
@@ -585,7 +585,7 @@ module "aci_bridge_domain" {
 
 module "aci_application_profile" {
   source  = "netascode/application-profile/aci"
-  version = ">= 0.1.0"
+  version = "0.1.0"
 
   for_each    = { for ap in lookup(local.tenant, "application_profiles", []) : ap.name => ap if lookup(local.modules, "aci_application_profile", true) }
   tenant      = module.aci_tenant[0].name
@@ -596,7 +596,7 @@ module "aci_application_profile" {
 
 module "aci_endpoint_group" {
   source  = "netascode/endpoint-group/aci"
-  version = ">= 0.2.1"
+  version = "0.2.1"
 
   for_each                    = { for epg in local.endpoint_groups : epg.key => epg.value if lookup(local.modules, "aci_endpoint_group", true) }
   tenant                      = module.aci_tenant[0].name
@@ -637,7 +637,7 @@ module "aci_endpoint_group" {
 
 module "aci_endpoint_security_group" {
   source  = "netascode/endpoint-security-group/aci"
-  version = ">= 0.2.0"
+  version = "0.2.0"
 
   for_each             = { for esg in local.endpoint_security_groups : esg.key => esg.value if lookup(local.modules, "aci_endpoint_security_group", true) }
   tenant               = module.aci_tenant[0].name
@@ -663,7 +663,7 @@ module "aci_endpoint_security_group" {
 
 module "aci_inband_endpoint_group" {
   source  = "netascode/inband-endpoint-group/aci"
-  version = ">= 0.1.1"
+  version = "0.1.1"
 
   for_each                    = { for epg in lookup(local.tenant, "inb_endpoint_groups", []) : epg.name => epg if local.tenant.name == "mgmt" && lookup(local.modules, "aci_inband_endpoint_group", true) }
   name                        = "${each.value.name}${local.defaults.apic.tenants.inb_endpoint_groups.name_suffix}"
@@ -682,7 +682,7 @@ module "aci_inband_endpoint_group" {
 
 module "aci_oob_endpoint_group" {
   source  = "netascode/oob-endpoint-group/aci"
-  version = ">= 0.1.0"
+  version = "0.1.0"
 
   for_each               = { for epg in lookup(local.tenant, "oob_endpoint_groups", []) : epg.name => epg if local.tenant.name == "mgmt" && lookup(local.modules, "aci_oob_endpoint_group", true) }
   name                   = "${each.value.name}${local.defaults.apic.tenants.oob_endpoint_groups.name_suffix}"
@@ -695,7 +695,7 @@ module "aci_oob_endpoint_group" {
 
 module "aci_oob_ext_mgmt_instance" {
   source  = "netascode/oob-external-management-instance/aci"
-  version = ">= 0.1.0"
+  version = "0.1.0"
 
   for_each               = { for ext in lookup(local.tenant, "ext_mgmt_instances", []) : ext.name => ext if local.tenant.name == "mgmt" && lookup(local.modules, "aci_oob_ext_mgmt_instance", true) }
   name                   = "${each.value.name}${local.defaults.apic.tenants.ext_mgmt_instances.name_suffix}"
@@ -709,7 +709,7 @@ module "aci_oob_ext_mgmt_instance" {
 
 module "aci_l3out" {
   source  = "netascode/l3out/aci"
-  version = ">= 0.2.0"
+  version = "0.2.0"
 
   for_each                                = { for l3out in local.l3outs : l3out.name => l3out if lookup(local.modules, "aci_l3out", true) }
   tenant                                  = module.aci_tenant[0].name
@@ -752,7 +752,7 @@ module "aci_l3out" {
 
 module "aci_l3out_node_profile_manual" {
   source  = "netascode/l3out-node-profile/aci"
-  version = ">= 0.2.2"
+  version = "0.2.3"
 
   for_each  = { for np in local.node_profiles_manual : np.key => np.value if lookup(local.modules, "aci_l3out_node_profile", true) }
   tenant    = module.aci_tenant[0].name
@@ -768,7 +768,7 @@ module "aci_l3out_node_profile_manual" {
 
 module "aci_l3out_node_profile_auto" {
   source  = "netascode/l3out-node-profile/aci"
-  version = ">= 0.2.2"
+  version = "0.2.3"
 
   for_each  = { for np in local.node_profiles_auto : np.name => np if lookup(local.modules, "aci_l3out_node_profile", true) }
   tenant    = module.aci_tenant[0].name
@@ -784,7 +784,7 @@ module "aci_l3out_node_profile_auto" {
 
 module "aci_l3out_interface_profile_manual" {
   source  = "netascode/l3out-interface-profile/aci"
-  version = ">= 0.2.3"
+  version = "0.2.3"
 
   for_each                    = { for ip in local.interface_profiles_manual : ip.key => ip.value if lookup(local.modules, "aci_l3out_interface_profile", true) }
   tenant                      = module.aci_tenant[0].name
@@ -830,7 +830,7 @@ module "aci_l3out_interface_profile_manual" {
 
 module "aci_l3out_interface_profile_auto" {
   source  = "netascode/l3out-interface-profile/aci"
-  version = ">= 0.2.3"
+  version = "0.2.3"
 
   for_each                    = { for ip in local.interface_profiles_auto : ip.name => ip if lookup(local.modules, "aci_l3out_interface_profile", true) }
   tenant                      = module.aci_tenant[0].name
@@ -876,7 +876,7 @@ module "aci_l3out_interface_profile_auto" {
 
 module "aci_external_endpoint_group" {
   source  = "netascode/external-endpoint-group/aci"
-  version = ">= 0.2.1"
+  version = "0.2.1"
 
   for_each                    = { for epg in local.external_endpoint_groups : epg.key => epg.value if lookup(local.modules, "aci_external_endpoint_group", true) }
   tenant                      = module.aci_tenant[0].name
@@ -900,7 +900,7 @@ module "aci_external_endpoint_group" {
 
 module "aci_filter" {
   source  = "netascode/filter/aci"
-  version = ">= 0.2.0"
+  version = "0.2.0"
 
   for_each    = { for filter in lookup(local.tenant, "filters", []) : filter.name => filter if lookup(local.modules, "aci_filter", true) }
   tenant      = module.aci_tenant[0].name
@@ -923,7 +923,7 @@ module "aci_filter" {
 
 module "aci_contract" {
   source  = "netascode/contract/aci"
-  version = ">= 0.2.0"
+  version = "0.2.0"
 
   for_each    = { for contract in lookup(local.tenant, "contracts", []) : contract.name => contract if lookup(local.modules, "aci_contract", true) }
   tenant      = module.aci_tenant[0].name
@@ -952,7 +952,7 @@ module "aci_contract" {
 
 module "aci_oob_contract" {
   source  = "netascode/oob-contract/aci"
-  version = ">= 0.2.0"
+  version = "0.2.0"
 
   for_each    = { for contract in lookup(local.tenant, "oob_contracts", []) : contract.name => contract if local.tenant.name == "mgmt" && lookup(local.modules, "aci_oob_contract", true) }
   name        = "${each.value.name}${local.defaults.apic.tenants.oob_contracts.name_suffix}"
@@ -975,7 +975,7 @@ module "aci_oob_contract" {
 
 module "aci_imported_contract" {
   source  = "netascode/imported-contract/aci"
-  version = ">= 0.1.0"
+  version = "0.1.0"
 
   for_each        = { for contract in lookup(local.tenant, "imported_contracts", []) : contract.name => contract if lookup(local.modules, "aci_imported_contract", true) }
   tenant          = module.aci_tenant[0].name
@@ -986,7 +986,7 @@ module "aci_imported_contract" {
 
 module "aci_ospf_interface_policy" {
   source  = "netascode/ospf-interface-policy/aci"
-  version = ">= 0.1.0"
+  version = "0.1.0"
 
   for_each                = { for policy in lookup(lookup(local.tenant, "policies", {}), "ospf_interface_policies", []) : policy.name => policy if lookup(local.modules, "aci_ospf_interface_policy", true) }
   tenant                  = module.aci_tenant[0].name
@@ -1007,7 +1007,7 @@ module "aci_ospf_interface_policy" {
 
 module "aci_bgp_timer_policy" {
   source  = "netascode/bgp-timer-policy/aci"
-  version = ">= 0.1.0"
+  version = "0.1.0"
 
   for_each                = { for pol in lookup(lookup(local.tenant, "policies", {}), "bgp_timer_policies", []) : pol.name => pol if lookup(local.modules, "aci_bgp_timer_policy", true) }
   tenant                  = module.aci_tenant[0].name
@@ -1022,7 +1022,7 @@ module "aci_bgp_timer_policy" {
 
 module "aci_bgp_address_family_context_policy" {
   source  = "netascode/bgp-address-family-context-policy/aci"
-  version = ">= 0.1.0"
+  version = "0.1.0"
 
   for_each               = { for pol in lookup(lookup(local.tenant, "policies", {}), "bgp_address_family_context_policies", []) : pol.name => pol if lookup(local.modules, "aci_bgp_address_family_context_policy", true) }
   tenant                 = module.aci_tenant[0].name
@@ -1039,7 +1039,7 @@ module "aci_bgp_address_family_context_policy" {
 
 module "aci_dhcp_relay_policy" {
   source  = "netascode/dhcp-relay-policy/aci"
-  version = ">= 0.2.0"
+  version = "0.2.0"
 
   for_each    = { for policy in lookup(lookup(local.tenant, "policies", {}), "dhcp_relay_policies", []) : policy.name => policy if lookup(local.modules, "aci_dhcp_relay_policy", true) }
   tenant      = module.aci_tenant[0].name
@@ -1058,7 +1058,7 @@ module "aci_dhcp_relay_policy" {
 
 module "aci_dhcp_option_policy" {
   source  = "netascode/dhcp-option-policy/aci"
-  version = ">= 0.2.0"
+  version = "0.2.0"
 
   for_each    = { for policy in lookup(lookup(local.tenant, "policies", {}), "dhcp_option_policies", []) : policy.name => policy if lookup(local.modules, "aci_dhcp_option_policy", true) }
   tenant      = module.aci_tenant[0].name
@@ -1069,7 +1069,7 @@ module "aci_dhcp_option_policy" {
 
 module "aci_route_control_route_map" {
   source  = "netascode/route-control-route-map/aci"
-  version = ">= 0.1.0"
+  version = "0.1.0"
 
   for_each    = { for rm in lookup(lookup(local.tenant, "policies", {}), "route_control_route_maps", []) : rm.name => rm if lookup(local.modules, "aci_route_control_route_map", true) }
   tenant      = module.aci_tenant[0].name
@@ -1087,7 +1087,7 @@ module "aci_route_control_route_map" {
 
 module "aci_ip_sla_policy" {
   source  = "netascode/ip-sla-policy/aci"
-  version = ">= 0.1.0"
+  version = "0.1.0"
 
   for_each    = { for policy in lookup(lookup(local.tenant, "policies", {}), "ip_sla_policies", []) : policy.name => policy if lookup(local.modules, "ip_sla_policy", true) }
   tenant      = module.aci_tenant[0].name
@@ -1101,7 +1101,7 @@ module "aci_ip_sla_policy" {
 
 module "aci_match_rule" {
   source  = "netascode/match-rule/aci"
-  version = ">= 0.2.0"
+  version = "0.2.0"
 
   for_each    = { for rule in lookup(lookup(local.tenant, "policies", {}), "match_rules", []) : rule.name => rule if lookup(local.modules, "aci_match_rule", true) }
   tenant      = module.aci_tenant[0].name
@@ -1118,7 +1118,7 @@ module "aci_match_rule" {
 
 module "aci_set_rule" {
   source  = "netascode/set-rule/aci"
-  version = ">= 0.2.2"
+  version = "0.2.2"
 
   for_each                    = { for rule in lookup(lookup(local.tenant, "policies", {}), "set_rules", []) : rule.name => rule if lookup(local.modules, "aci_set_rule", true) }
   tenant                      = module.aci_tenant[0].name
@@ -1154,7 +1154,7 @@ module "aci_set_rule" {
 
 module "aci_bfd_interface_policy" {
   source  = "netascode/bfd-interface-policy/aci"
-  version = ">= 0.1.0"
+  version = "0.1.0"
 
   for_each                  = { for pol in lookup(lookup(local.tenant, "policies", {}), "bfd_interface_policies", []) : pol.name => pol if lookup(local.modules, "aci_bfd_interface_policy", true) }
   tenant                    = module.aci_tenant[0].name
@@ -1170,7 +1170,7 @@ module "aci_bfd_interface_policy" {
 
 module "aci_qos_policy" {
   source  = "netascode/qos-policy/aci"
-  version = ">= 0.1.2"
+  version = "0.1.2"
 
   for_each    = { for pol in lookup(lookup(local.tenant, "policies", {}), "qos", []) : pol.name => pol if lookup(local.modules, "aci_qos_policy", true) }
   tenant      = module.aci_tenant[0].name
@@ -1199,7 +1199,7 @@ module "aci_qos_policy" {
 
 module "aci_l4l7_device" {
   source  = "netascode/l4l7-device/aci"
-  version = ">= 0.2.0"
+  version = "0.2.0"
 
   for_each         = { for device in local.l4l7_devices : device.name => device if lookup(local.modules, "aci_l4l7_device", true) }
   tenant           = module.aci_tenant[0].name
@@ -1238,7 +1238,7 @@ module "aci_l4l7_device" {
 
 module "aci_redirect_policy" {
   source  = "netascode/redirect-policy/aci"
-  version = ">= 0.2.1"
+  version = "0.2.1"
 
   for_each               = { for policy in lookup(lookup(local.tenant, "services", {}), "redirect_policies", []) : policy.name => policy if lookup(local.modules, "aci_redirect_policy", true) }
   tenant                 = module.aci_tenant[0].name
@@ -1268,7 +1268,7 @@ module "aci_redirect_policy" {
 
 module "aci_redirect_health_group" {
   source  = "netascode/redirect-health-group/aci"
-  version = ">= 0.1.0"
+  version = "0.1.0"
 
   for_each    = { for health_group in lookup(lookup(local.tenant, "services", {}), "redirect_health_groups", []) : health_group.name => health_group if lookup(local.modules, "aci_redirect_health_group", true) }
   tenant      = module.aci_tenant[0].name
@@ -1278,7 +1278,7 @@ module "aci_redirect_health_group" {
 
 module "aci_service_graph_template" {
   source  = "netascode/service-graph-template/aci"
-  version = ">= 0.1.0"
+  version = "0.1.0"
 
   for_each            = { for sg_template in lookup(lookup(local.tenant, "services", {}), "service_graph_templates", []) : sg_template.name => sg_template if lookup(local.modules, "aci_service_graph_template", true) }
   tenant              = module.aci_tenant[0].name
@@ -1301,7 +1301,7 @@ module "aci_service_graph_template" {
 
 module "aci_device_selection_policy" {
   source  = "netascode/device-selection-policy/aci"
-  version = ">= 0.1.0"
+  version = "0.1.0"
 
   for_each                                                = { for pol in lookup(lookup(local.tenant, "services", {}), "device_selection_policies", []) : "${pol.contract}/${pol.service_graph_template}" => pol if lookup(local.modules, "aci_device_selection_policy", true) }
   tenant                                                  = module.aci_tenant[0].name

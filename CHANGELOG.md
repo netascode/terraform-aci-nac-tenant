@@ -1,6 +1,7 @@
 ## 0.3.1 (unreleased)
 
 - Harmonize module flags
+- Fix service graph association in contract subjects
 
 ## 0.3.0
 

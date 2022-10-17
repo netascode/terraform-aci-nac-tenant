@@ -935,7 +935,7 @@ module "aci_contract" {
     name          = "${subject.name}${local.defaults.apic.tenants.contracts.subjects.name_suffix}"
     alias         = lookup(subject, "alias", "")
     description   = lookup(subject, "description", "")
-    service_graph = lookup(subject, "service_graph", null) != null ? "${subject.service_graph}${local.defaults.apic.tenants.services.service_graph_templates.name_suffix}" : ""
+    service_graph = lookup(subject, "service_graph", null) != null ? "${subject.service_graph}${local.defaults.apic.tenants.services.service_graph_templates.name_suffix}" : null
     filters = [for filter in lookup(subject, "filters", []) : {
       filter   = "${filter.filter}${local.defaults.apic.tenants.filters.name_suffix}"
       action   = lookup(filter, "action", local.defaults.apic.tenants.contracts.subjects.filters.action)

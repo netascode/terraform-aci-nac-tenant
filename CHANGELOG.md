@@ -2,6 +2,7 @@
 
 - Harmonize module flags
 - Fix service graph association in contract subjects
+- Fix L3out interface type derivation
 
 ## 0.3.0
 

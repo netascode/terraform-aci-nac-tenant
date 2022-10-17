@@ -693,11 +693,11 @@ module "aci_oob_endpoint_group" {
   ]
 }
 
-module "aci_oob_ext_mgmt_instance" {
+module "aci_oob_external_management_instance" {
   source  = "netascode/oob-external-management-instance/aci"
   version = "0.1.0"
 
-  for_each               = { for ext in lookup(local.tenant, "ext_mgmt_instances", []) : ext.name => ext if local.tenant.name == "mgmt" && lookup(local.modules, "aci_oob_ext_mgmt_instance", true) }
+  for_each               = { for ext in lookup(local.tenant, "ext_mgmt_instances", []) : ext.name => ext if local.tenant.name == "mgmt" && lookup(local.modules, "aci_oob_external_management_instance", true) }
   name                   = "${each.value.name}${local.defaults.apic.tenants.ext_mgmt_instances.name_suffix}"
   subnets                = lookup(each.value, "subnets", [])
   oob_contract_consumers = lookup(lookup(each.value, "oob_contracts", {}), "consumers", null) != null ? [for contract in each.value.oob_contracts.consumers : "${contract}${local.defaults.apic.tenants.oob_contracts.name_suffix}"] : []
@@ -1089,7 +1089,7 @@ module "aci_ip_sla_policy" {
   source  = "netascode/ip-sla-policy/aci"
   version = "0.1.0"
 
-  for_each    = { for policy in lookup(lookup(local.tenant, "policies", {}), "ip_sla_policies", []) : policy.name => policy if lookup(local.modules, "ip_sla_policy", true) }
+  for_each    = { for policy in lookup(lookup(local.tenant, "policies", {}), "ip_sla_policies", []) : policy.name => policy if lookup(local.modules, "aci_ip_sla_policy", true) }
   tenant      = module.aci_tenant[0].name
   name        = "${each.value.name}${local.defaults.apic.tenants.policies.ip_sla_policies.name_suffix}"
   description = lookup(each.value, "description", "")

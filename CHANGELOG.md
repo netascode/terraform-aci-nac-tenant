@@ -1,3 +1,7 @@
+## 0.3.1 (unreleased)
+
+- Harmonize module flags
+
 ## 0.3.0
 
 - Fix BGP peer address family attribute order for L3out node profiles

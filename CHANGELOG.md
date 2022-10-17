@@ -1,4 +1,4 @@
-## 0.3.1 (unreleased)
+## 0.3.1
 
 - Harmonize module flags
 - Fix service graph association in contract subjects

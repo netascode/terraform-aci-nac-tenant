@@ -489,7 +489,7 @@ locals {
     logical_interfaces = [for lint in lookup(device, "logical_interfaces", []) : {
       name  = "${lint.name}${local.defaults.apic.tenants.services.l4l7_devices.logical_interfaces.name_suffix}"
       alias = lookup(lint, "alias", null)
-      vlan  = lint.vlan
+      vlan  = lookup(lint, "vlan", null)
       concrete_interfaces = lookup(lint, "concrete_interfaces", null) == null ? null : [for cint in lint.concrete_interfaces : {
         device    = cint.device
         interface = "${cint.interface_name}${local.defaults.apic.tenants.services.l4l7_devices.logical_interfaces.concrete_interfaces.name_suffix}"

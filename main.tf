@@ -1199,7 +1199,7 @@ module "aci_qos_policy" {
 
 module "aci_l4l7_device" {
   source  = "netascode/l4l7-device/aci"
-  version = "0.2.0"
+  version = "0.2.1"
 
   for_each         = { for device in local.l4l7_devices : device.name => device if lookup(local.modules, "aci_l4l7_device", true) }
   tenant           = module.aci_tenant[0].name

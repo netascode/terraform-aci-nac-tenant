@@ -1,6 +1,7 @@
 ## 0.3.2 (unreleased)
 
 - Add support for L4-L7 device logical interfaces without encap
+- Add support for L4-L7 device logical interfaces without paths
 
 ## 0.3.1
 

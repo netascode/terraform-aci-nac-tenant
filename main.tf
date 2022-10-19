@@ -467,7 +467,7 @@ locals {
     trunking         = lookup(device, "trunking", local.defaults.apic.tenants.services.l4l7_devices.trunking)
     physical_domain  = lookup(device, "physical_domain", "")
     vmm_provider     = lookup(device, "vmm_provider", "VMware")
-    vmm_domain       = lookup(device, "vmm_domain", "")
+    vmm_domain       = lookup(device, "vmware_vmm_domain", "")
     concrete_devices = [for cdev in lookup(device, "concrete_devices", []) : {
       name         = "${cdev.name}${local.defaults.apic.tenants.services.l4l7_devices.concrete_devices.name_suffix}"
       alias        = lookup(cdev, "alias", null)

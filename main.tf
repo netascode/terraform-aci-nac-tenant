@@ -466,8 +466,7 @@ locals {
     service_type     = lookup(device, "service_type", local.defaults.apic.tenants.services.l4l7_devices.service_type)
     trunking         = lookup(device, "trunking", local.defaults.apic.tenants.services.l4l7_devices.trunking)
     physical_domain  = lookup(device, "physical_domain", "")
-    #vmm_provider     = lookup(device, "vmm_provider", "")
-    virtual_domain = lookup(device, "virtual_domain", "")
+    vmm_domain       = lookup(device, "vmm_domain", "")
     concrete_devices = [for cdev in lookup(device, "concrete_devices", []) : {
       name         = "${cdev.name}${local.defaults.apic.tenants.services.l4l7_devices.concrete_devices.name_suffix}"
       alias        = lookup(cdev, "alias", null)
@@ -1216,8 +1215,7 @@ module "aci_l4l7_device" {
   service_type     = each.value.service_type
   trunking         = each.value.trunking
   physical_domain  = each.value.physical_domain
-  #vmm_provider     = each.value.vmm_provider
-  virtual_domain = each.value.virtual_domain
+  vmm_domain       = each.value.vmm_domain
   concrete_devices = [for cdev in lookup(each.value, "concrete_devices", []) : {
     name         = cdev.name
     alias        = cdev.alias

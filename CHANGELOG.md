@@ -5,6 +5,7 @@
 - Add `vmware_vmm_domain` attribute to L4-L7 device
 - Add `regex_community_terms` attribute to match rules
 - Add `community_terms` attribute to match rules
+- Fix tag selector variable validation of endpoint security group
 
 ## 0.3.1
 

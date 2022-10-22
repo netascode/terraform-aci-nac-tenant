@@ -639,7 +639,7 @@ module "aci_endpoint_group" {
 
 module "aci_endpoint_security_group" {
   source  = "netascode/endpoint-security-group/aci"
-  version = "0.2.0"
+  version = "0.2.1"
 
   for_each             = { for esg in local.endpoint_security_groups : esg.key => esg.value if lookup(local.modules, "aci_endpoint_security_group", true) }
   tenant               = module.aci_tenant[0].name

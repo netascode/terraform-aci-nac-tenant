@@ -3,6 +3,8 @@
 - Add support for L4-L7 device logical interfaces without encap
 - Add support for L4-L7 device logical interfaces without paths
 - Add `vmware_vmm_domain` attribute to L4-L7 device
+- Add `regex_community_terms` attribute to match rules
+- Add `community_terms` attribute to match rules
 
 ## 0.3.1
 

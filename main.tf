@@ -1103,12 +1103,27 @@ module "aci_ip_sla_policy" {
 
 module "aci_match_rule" {
   source  = "netascode/match-rule/aci"
-  version = "0.2.0"
+  version = "0.2.1"
 
   for_each    = { for rule in lookup(lookup(local.tenant, "policies", {}), "match_rules", []) : rule.name => rule if lookup(local.modules, "aci_match_rule", true) }
   tenant      = module.aci_tenant[0].name
   name        = "${each.value.name}${local.defaults.apic.tenants.policies.match_rules.name_suffix}"
   description = lookup(each.value, "description", "")
+  regex_community_terms = [for regex in lookup(each.value, "regex_community_terms", []) : {
+    name        = "${regex.name}${local.defaults.apic.tenants.policies.match_rules.regex_community_terms.name_suffix}"
+    regex       = regex.regex
+    type        = lookup(regex, "type", local.defaults.apic.tenants.policies.match_rules.regex_community_terms.type)
+    description = lookup(regex, "description", "")
+  }]
+  community_terms = [for comm in lookup(each.value, "community_terms", []) : {
+    name        = "${comm.name}${local.defaults.apic.tenants.policies.match_rules.community_terms.name_suffix}"
+    description = lookup(comm, "description", "")
+    factors = [for f in lookup(comm, "factors", []) : {
+      community   = f.community
+      description = lookup(f, "description", "")
+      scope       = lookup(f, "scope", local.defaults.apic.tenants.policies.match_rules.community_terms.factors.scope)
+    }]
+  }]
   prefixes = [for prefix in lookup(each.value, "prefixes", []) : {
     ip          = prefix.ip
     aggregate   = lookup(prefix, "aggregate", local.defaults.apic.tenants.policies.match_rules.prefixes.aggregate)

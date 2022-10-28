@@ -461,7 +461,6 @@ locals {
     type             = lookup(device, "type", local.defaults.apic.tenants.services.l4l7_devices.type)
     function         = lookup(device, "function", local.defaults.apic.tenants.services.l4l7_devices.function)
     copy_device      = lookup(device, "copy_device", local.defaults.apic.tenants.services.l4l7_devices.copy_device)
-    managed          = lookup(device, "managed", local.defaults.apic.tenants.services.l4l7_devices.managed)
     promiscuous_mode = lookup(device, "promiscuous_mode", local.defaults.apic.tenants.services.l4l7_devices.promiscuous_mode)
     service_type     = lookup(device, "service_type", local.defaults.apic.tenants.services.l4l7_devices.service_type)
     trunking         = lookup(device, "trunking", local.defaults.apic.tenants.services.l4l7_devices.trunking)
@@ -1227,7 +1226,6 @@ module "aci_l4l7_device" {
   type             = each.value.type
   function         = each.value.function
   copy_device      = each.value.copy_device
-  managed          = each.value.managed
   promiscuous_mode = each.value.promiscuous_mode
   service_type     = each.value.service_type
   trunking         = each.value.trunking
@@ -1312,7 +1310,6 @@ module "aci_service_graph_template" {
   device_tenant       = lookup(each.value.device, "tenant", local.tenant.name)
   device_function     = length(local.l4l7_devices) != 0 ? [for device in local.l4l7_devices : lookup(device, "function", []) if device.name == each.value.device.name][0] : "None"
   device_copy         = (length(local.l4l7_devices) != 0 ? [for device in local.l4l7_devices : lookup(device, "copy_device", []) if device.name == each.value.device.name][0] : false)
-  device_managed      = (length(local.l4l7_devices) != 0 ? [for device in local.l4l7_devices : lookup(device, "managed", []) if device.name == each.value.device.name][0] : false)
 
   depends_on = [
     module.aci_l4l7_device,

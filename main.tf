@@ -513,7 +513,7 @@ module "aci_tenant" {
 
 module "aci_vrf" {
   source  = "netascode/vrf/aci"
-  version = "0.1.3"
+  version = "0.1.4"
 
   for_each                               = { for vrf in lookup(local.tenant, "vrfs", []) : vrf.name => vrf if lookup(local.modules, "aci_vrf", true) }
   tenant                                 = module.aci_tenant[0].name
@@ -531,6 +531,26 @@ module "aci_vrf" {
   bgp_ipv4_address_family_context_policy = lookup(lookup(each.value, "bgp", {}), "ipv4_address_family_context_policy", null) != null ? "${each.value.bgp.ipv4_address_family_context_policy}${local.defaults.apic.tenants.policies.bgp_address_family_context_policies.name_suffix}" : ""
   bgp_ipv6_address_family_context_policy = lookup(lookup(each.value, "bgp", {}), "ipv6_address_family_context_policy", null) != null ? "${each.value.bgp.ipv6_address_family_context_policy}${local.defaults.apic.tenants.policies.bgp_address_family_context_policies.name_suffix}" : ""
   dns_labels                             = lookup(each.value, "dns_labels", [])
+  leaked_internal_prefixes = [for prefix in lookup(each.value, "leaked_internal_prefixes", []) : {
+    prefix = prefix.prefix
+    public = lookup(prefix, "public", local.defaults.apic.tenants.vrfs.leaked_internal_prefixes.public)
+    destinations = [for dest in lookup(prefix, "destinations", []) : {
+      description = lookup(dest, "description", "")
+      tenant      = dest.tenant
+      vrf         = dest.vrf
+      public      = lookup(dest, "public", "inherit")
+    }]
+  }]
+  leaked_external_prefixes = [for prefix in lookup(each.value, "leaked_external_prefixes", []) : {
+    prefix             = prefix.prefix
+    from_prefix_length = lookup(prefix, "from_prefix_length", null)
+    to_prefix_length   = lookup(prefix, "to_prefix_length", null)
+    destinations = [for dest in lookup(prefix, "destinations", []) : {
+      description = lookup(dest, "description", "")
+      tenant      = dest.tenant
+      vrf         = dest.vrf
+    }]
+  }]
 
   depends_on = [
     module.aci_contract,

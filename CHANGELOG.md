@@ -6,6 +6,7 @@
 - Add `regex_community_terms` attribute to match rules
 - Add `community_terms` attribute to match rules
 - Fix tag selector variable validation of endpoint security group
+- Add support for imported consumers (contract interface) to ESGs
 
 ## 0.3.1
 

@@ -34,6 +34,7 @@ locals {
         contract_consumers          = lookup(lookup(epg, "contracts", {}), "consumers", null) != null ? [for contract in epg.contracts.consumers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
         contract_providers          = lookup(lookup(epg, "contracts", {}), "providers", null) != null ? [for contract in epg.contracts.providers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
         contract_imported_consumers = lookup(lookup(epg, "contracts", {}), "imported_consumers", null) != null ? [for contract in epg.contracts.imported_consumers : "${contract}${local.defaults.apic.tenants.imported_contracts.name_suffix}"] : []
+        contract_intra_epgs         = lookup(lookup(epg, "contracts", {}), "intra_epgs", null) != null ? [for contract in epg.contracts.intra_epgs : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
         physical_domains            = lookup(epg, "physical_domains", null) != null ? [for domain in epg.physical_domains : "${domain}${local.defaults.apic.access_policies.physical_domains.name_suffix}"] : []
         static_ports = [for sp in lookup(epg, "static_ports", []) : {
           node_id = lookup(sp, "node_id", lookup(sp, "channel", null) != null ? try([for pg in local.leaf_interface_policy_group_mapping : lookup(pg, "node_ids", []) if pg.name == lookup(sp, "channel", null)][0][0], null) : null)
@@ -89,6 +90,7 @@ locals {
         contract_consumers          = lookup(lookup(esg, "contracts", {}), "consumers", null) != null ? [for contract in esg.contracts.consumers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
         contract_providers          = lookup(lookup(esg, "contracts", {}), "providers", null) != null ? [for contract in esg.contracts.providers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
         contract_imported_consumers = lookup(lookup(esg, "contracts", {}), "imported_consumers", null) != null ? [for contract in esg.contracts.imported_consumers : "${contract}${local.defaults.apic.tenants.imported_contracts.name_suffix}"] : []
+        contract_intra_esgs         = lookup(lookup(esg, "contracts", {}), "intra_esgs", null) != null ? [for contract in esg.contracts.intra_esgs : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
         esg_contract_masters = [for master in lookup(lookup(esg, "contracts", {}), "masters", []) : {
           tenant                  = local.tenant.name
           application_profile     = "${lookup(master, "application_profile", null) != null ? master.application_profile : ap.name}${local.defaults.apic.tenants.application_profiles.name_suffix}"
@@ -619,7 +621,7 @@ module "aci_application_profile" {
 
 module "aci_endpoint_group" {
   source  = "netascode/endpoint-group/aci"
-  version = "0.2.1"
+  version = "0.2.2"
 
   for_each                    = { for epg in local.endpoint_groups : epg.key => epg.value if lookup(local.modules, "aci_endpoint_group", true) }
   tenant                      = module.aci_tenant[0].name
@@ -635,6 +637,7 @@ module "aci_endpoint_group" {
   contract_consumers          = each.value.contract_consumers
   contract_providers          = each.value.contract_providers
   contract_imported_consumers = each.value.contract_imported_consumers
+  contract_intra_epgs         = each.value.contract_intra_epgs
   physical_domains            = each.value.physical_domains
   static_ports = [for sp in lookup(each.value, "static_ports", []) : {
     node_id              = sp.node_id
@@ -660,7 +663,7 @@ module "aci_endpoint_group" {
 
 module "aci_endpoint_security_group" {
   source  = "netascode/endpoint-security-group/aci"
-  version = "0.2.2"
+  version = "0.2.3"
 
   for_each                    = { for esg in local.endpoint_security_groups : esg.key => esg.value if lookup(local.modules, "aci_endpoint_security_group", true) }
   tenant                      = module.aci_tenant[0].name
@@ -674,6 +677,7 @@ module "aci_endpoint_security_group" {
   contract_consumers          = each.value.contract_consumers
   contract_providers          = each.value.contract_providers
   contract_imported_consumers = each.value.contract_imported_consumers
+  contract_intra_esgs         = each.value.contract_intra_esgs
   esg_contract_masters        = each.value.esg_contract_masters
   tag_selectors               = each.value.tag_selectors
   epg_selectors               = each.value.epg_selectors

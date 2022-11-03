@@ -8,6 +8,8 @@
 - Fix tag selector variable validation of endpoint security group
 - Add support for imported consumers (contract interface) to ESGs
 - Add support for leaked internal and external prefixes to VRF
+- Add support for intra-EPG contracts
+- Add support for intra-ESG contracts
 
 ## 0.3.1
 

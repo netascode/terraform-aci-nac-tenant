@@ -507,7 +507,7 @@ module "aci_tenant" {
   source  = "netascode/tenant/aci"
   version = "0.1.0"
 
-  count       = lookup(local.tenant, "managed", try(local.defaults.apic.tenants.managed, true)) == false ? 0 : 1
+  count       = lookup(local.tenant, "managed", try(local.defaults.apic.tenants.managed, true)) == false || lookup(local.modules, "aci_tenant", true) == false ? 0 : 1
   name        = local.tenant.name
   alias       = lookup(local.tenant, "alias", "")
   description = lookup(local.tenant, "description", "")

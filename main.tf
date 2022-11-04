@@ -103,7 +103,7 @@ locals {
           description = lookup(sel, "description", "")
         }]
         epg_selectors = [for sel in lookup(esg, "epg_selectors", []) : {
-          tenant              = lookup(sel, "tenant", null) != null ? sel.tenant : local.tenant.name
+          tenant              = local.tenant.name
           application_profile = "${lookup(sel, "application_profile", null) != null ? sel.application_profile : ap.name}${local.defaults.apic.tenants.application_profiles.name_suffix}"
           endpoint_group      = "${sel.endpoint_group}${local.defaults.apic.tenants.application_profiles.endpoint_groups.name_suffix}"
           description         = lookup(sel, "description", "")
@@ -672,7 +672,7 @@ module "aci_endpoint_group" {
 
 module "aci_endpoint_security_group" {
   source  = "netascode/endpoint-security-group/aci"
-  version = "0.2.3"
+  version = "0.2.4"
 
   for_each                    = { for esg in local.endpoint_security_groups : esg.key => esg.value if lookup(local.modules, "aci_endpoint_security_group", true) }
   tenant                      = local.tenant.name

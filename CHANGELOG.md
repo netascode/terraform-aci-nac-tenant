@@ -3,6 +3,7 @@
 - Add QoS attributes to contract
 - Add `managed` flag to tenant (default value `true`) to indicate if a tenant should be created/modified/deleted or is assumed to exist already and just acts a container for other objects
 - Add `managed` flag to application profile
+- Remove option to specify tenant for EPG selectors under an ESG
 
 ## 0.3.2
 

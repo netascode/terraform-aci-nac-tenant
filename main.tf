@@ -34,6 +34,7 @@ locals {
         contract_consumers          = lookup(lookup(epg, "contracts", {}), "consumers", null) != null ? [for contract in epg.contracts.consumers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
         contract_providers          = lookup(lookup(epg, "contracts", {}), "providers", null) != null ? [for contract in epg.contracts.providers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
         contract_imported_consumers = lookup(lookup(epg, "contracts", {}), "imported_consumers", null) != null ? [for contract in epg.contracts.imported_consumers : "${contract}${local.defaults.apic.tenants.imported_contracts.name_suffix}"] : []
+        contract_intra_epgs         = lookup(lookup(epg, "contracts", {}), "intra_epgs", null) != null ? [for contract in epg.contracts.intra_epgs : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
         physical_domains            = lookup(epg, "physical_domains", null) != null ? [for domain in epg.physical_domains : "${domain}${local.defaults.apic.access_policies.physical_domains.name_suffix}"] : []
         static_ports = [for sp in lookup(epg, "static_ports", []) : {
           node_id = lookup(sp, "node_id", lookup(sp, "channel", null) != null ? try([for pg in local.leaf_interface_policy_group_mapping : lookup(pg, "node_ids", []) if pg.name == lookup(sp, "channel", null)][0][0], null) : null)
@@ -79,15 +80,17 @@ locals {
     for esg in lookup(ap, "endpoint_security_groups", []) : {
       key = "${ap.name}/${esg.name}"
       value = {
-        application_profile = "${ap.name}${local.defaults.apic.tenants.application_profiles.name_suffix}"
-        name                = "${esg.name}${local.defaults.apic.tenants.application_profiles.endpoint_security_groups.name_suffix}"
-        description         = lookup(esg, "description", "")
-        vrf                 = "${esg.vrf}${local.defaults.apic.tenants.vrfs.name_suffix}"
-        shutdown            = lookup(esg, "shutdown", local.defaults.apic.tenants.application_profiles.endpoint_security_groups.shutdown)
-        intra_esg_isolation = lookup(esg, "intra_esg_isolation", local.defaults.apic.tenants.application_profiles.endpoint_security_groups.intra_esg_isolation)
-        preferred_group     = lookup(esg, "preferred_group", local.defaults.apic.tenants.application_profiles.endpoint_security_groups.preferred_group)
-        contract_consumers  = lookup(lookup(esg, "contracts", {}), "consumers", null) != null ? [for contract in esg.contracts.consumers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
-        contract_providers  = lookup(lookup(esg, "contracts", {}), "providers", null) != null ? [for contract in esg.contracts.providers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
+        application_profile         = "${ap.name}${local.defaults.apic.tenants.application_profiles.name_suffix}"
+        name                        = "${esg.name}${local.defaults.apic.tenants.application_profiles.endpoint_security_groups.name_suffix}"
+        description                 = lookup(esg, "description", "")
+        vrf                         = "${esg.vrf}${local.defaults.apic.tenants.vrfs.name_suffix}"
+        shutdown                    = lookup(esg, "shutdown", local.defaults.apic.tenants.application_profiles.endpoint_security_groups.shutdown)
+        intra_esg_isolation         = lookup(esg, "intra_esg_isolation", local.defaults.apic.tenants.application_profiles.endpoint_security_groups.intra_esg_isolation)
+        preferred_group             = lookup(esg, "preferred_group", local.defaults.apic.tenants.application_profiles.endpoint_security_groups.preferred_group)
+        contract_consumers          = lookup(lookup(esg, "contracts", {}), "consumers", null) != null ? [for contract in esg.contracts.consumers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
+        contract_providers          = lookup(lookup(esg, "contracts", {}), "providers", null) != null ? [for contract in esg.contracts.providers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
+        contract_imported_consumers = lookup(lookup(esg, "contracts", {}), "imported_consumers", null) != null ? [for contract in esg.contracts.imported_consumers : "${contract}${local.defaults.apic.tenants.imported_contracts.name_suffix}"] : []
+        contract_intra_esgs         = lookup(lookup(esg, "contracts", {}), "intra_esgs", null) != null ? [for contract in esg.contracts.intra_esgs : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
         esg_contract_masters = [for master in lookup(lookup(esg, "contracts", {}), "masters", []) : {
           tenant                  = local.tenant.name
           application_profile     = "${lookup(master, "application_profile", null) != null ? master.application_profile : ap.name}${local.defaults.apic.tenants.application_profiles.name_suffix}"
@@ -531,6 +534,26 @@ module "aci_vrf" {
   bgp_ipv4_address_family_context_policy = lookup(lookup(each.value, "bgp", {}), "ipv4_address_family_context_policy", null) != null ? "${each.value.bgp.ipv4_address_family_context_policy}${local.defaults.apic.tenants.policies.bgp_address_family_context_policies.name_suffix}" : ""
   bgp_ipv6_address_family_context_policy = lookup(lookup(each.value, "bgp", {}), "ipv6_address_family_context_policy", null) != null ? "${each.value.bgp.ipv6_address_family_context_policy}${local.defaults.apic.tenants.policies.bgp_address_family_context_policies.name_suffix}" : ""
   dns_labels                             = lookup(each.value, "dns_labels", [])
+  leaked_internal_prefixes = [for prefix in lookup(each.value, "leaked_internal_prefixes", []) : {
+    prefix = prefix.prefix
+    public = lookup(prefix, "public", local.defaults.apic.tenants.vrfs.leaked_internal_prefixes.public)
+    destinations = [for dest in lookup(prefix, "destinations", []) : {
+      description = lookup(dest, "description", "")
+      tenant      = dest.tenant
+      vrf         = dest.vrf
+      public      = lookup(dest, "public", "inherit")
+    }]
+  }]
+  leaked_external_prefixes = [for prefix in lookup(each.value, "leaked_external_prefixes", []) : {
+    prefix             = prefix.prefix
+    from_prefix_length = lookup(prefix, "from_prefix_length", null)
+    to_prefix_length   = lookup(prefix, "to_prefix_length", null)
+    destinations = [for dest in lookup(prefix, "destinations", []) : {
+      description = lookup(dest, "description", "")
+      tenant      = dest.tenant
+      vrf         = dest.vrf
+    }]
+  }]
 
   depends_on = [
     module.aci_tenant,
@@ -621,6 +644,7 @@ module "aci_endpoint_group" {
   contract_consumers          = each.value.contract_consumers
   contract_providers          = each.value.contract_providers
   contract_imported_consumers = each.value.contract_imported_consumers
+  contract_intra_epgs         = each.value.contract_intra_epgs
   physical_domains            = each.value.physical_domains
   static_ports = [for sp in lookup(each.value, "static_ports", []) : {
     node_id              = sp.node_id
@@ -649,26 +673,29 @@ module "aci_endpoint_security_group" {
   source  = "netascode/endpoint-security-group/aci"
   version = "0.2.3"
 
-  for_each             = { for esg in local.endpoint_security_groups : esg.key => esg.value if lookup(local.modules, "aci_endpoint_security_group", true) }
-  tenant               = local.tenant.name
-  application_profile  = module.aci_application_profile[each.value.application_profile].name
-  name                 = each.value.name
-  description          = each.value.description
-  vrf                  = each.value.vrf
-  shutdown             = each.value.shutdown
-  intra_esg_isolation  = each.value.intra_esg_isolation
-  preferred_group      = each.value.preferred_group
-  contract_consumers   = each.value.contract_consumers
-  contract_providers   = each.value.contract_providers
-  esg_contract_masters = each.value.esg_contract_masters
-  tag_selectors        = each.value.tag_selectors
-  epg_selectors        = each.value.epg_selectors
-  ip_subnet_selectors  = each.value.ip_subnet_selectors
+  for_each                    = { for esg in local.endpoint_security_groups : esg.key => esg.value if lookup(local.modules, "aci_endpoint_security_group", true) }
+  tenant                      = module.aci_tenant[0].name
+  application_profile         = module.aci_application_profile[each.value.application_profile].name
+  name                        = each.value.name
+  description                 = each.value.description
+  vrf                         = each.value.vrf
+  shutdown                    = each.value.shutdown
+  intra_esg_isolation         = each.value.intra_esg_isolation
+  preferred_group             = each.value.preferred_group
+  contract_consumers          = each.value.contract_consumers
+  contract_providers          = each.value.contract_providers
+  contract_imported_consumers = each.value.contract_imported_consumers
+  contract_intra_esgs         = each.value.contract_intra_esgs
+  esg_contract_masters        = each.value.esg_contract_masters
+  tag_selectors               = each.value.tag_selectors
+  epg_selectors               = each.value.epg_selectors
+  ip_subnet_selectors         = each.value.ip_subnet_selectors
 
   depends_on = [
     module.aci_tenant,
     module.aci_vrf,
     module.aci_contract,
+    module.aci_endpoint_group,
   ]
 }
 
@@ -947,7 +974,7 @@ module "aci_filter" {
 
 module "aci_contract" {
   source  = "netascode/contract/aci"
-  version = "0.2.0"
+  version = "0.2.1"
 
   for_each    = { for contract in lookup(local.tenant, "contracts", []) : contract.name => contract if lookup(local.modules, "aci_contract", true) }
   tenant      = local.tenant.name
@@ -955,11 +982,15 @@ module "aci_contract" {
   alias       = lookup(each.value, "alias", "")
   description = lookup(each.value, "description", "")
   scope       = lookup(each.value, "scope", local.defaults.apic.tenants.contracts.scope)
+  qos_class   = lookup(each.value, "qos_class", local.defaults.apic.tenants.contracts.qos_class)
+  target_dscp = lookup(each.value, "target_dscp", local.defaults.apic.tenants.contracts.target_dscp)
   subjects = [for subject in lookup(each.value, "subjects", []) : {
     name          = "${subject.name}${local.defaults.apic.tenants.contracts.subjects.name_suffix}"
     alias         = lookup(subject, "alias", "")
     description   = lookup(subject, "description", "")
     service_graph = lookup(subject, "service_graph", null) != null ? "${subject.service_graph}${local.defaults.apic.tenants.services.service_graph_templates.name_suffix}" : null
+    qos_class     = lookup(subject, "qos_class", local.defaults.apic.tenants.contracts.subjects.qos_class)
+    target_dscp   = lookup(subject, "target_dscp", local.defaults.apic.tenants.contracts.subjects.target_dscp)
     filters = [for filter in lookup(subject, "filters", []) : {
       filter   = "${filter.filter}${local.defaults.apic.tenants.filters.name_suffix}"
       action   = lookup(filter, "action", local.defaults.apic.tenants.contracts.subjects.filters.action)

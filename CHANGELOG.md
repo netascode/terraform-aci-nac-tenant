@@ -1,4 +1,8 @@
-## 0.3.2 (unreleased)
+## 0.3.3 (unreleased)
+
+- Add QoS attributes to contract
+
+## 0.3.2
 
 - Add support for L4-L7 device logical interfaces without encap
 - Add support for L4-L7 device logical interfaces without paths
@@ -6,6 +10,11 @@
 - Add `regex_community_terms` attribute to match rules
 - Add `community_terms` attribute to match rules
 - Fix tag selector variable validation of endpoint security group
+- Add support for imported consumers (contract interface) to ESGs
+- Add support for leaked internal and external prefixes to VRF
+- Add support for intra-EPG contracts
+- Add support for intra-ESG contracts
+- Fix [issue](https://github.com/netascode/terraform-aci-nac-tenant/issues/13) related to ESG deployment with EPG selectors
 
 ## 0.3.1
 

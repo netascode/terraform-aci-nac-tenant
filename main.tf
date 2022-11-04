@@ -686,6 +686,7 @@ module "aci_endpoint_security_group" {
   depends_on = [
     module.aci_vrf,
     module.aci_contract,
+    module.aci_endpoint_group,
   ]
 }
 

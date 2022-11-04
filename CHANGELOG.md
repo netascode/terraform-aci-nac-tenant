@@ -10,6 +10,7 @@
 - Add support for leaked internal and external prefixes to VRF
 - Add support for intra-EPG contracts
 - Add support for intra-ESG contracts
+- Fix [issue](https://github.com/netascode/terraform-aci-nac-tenant/issues/13) related to ESG deployment with EPG selectors
 
 ## 0.3.1
 

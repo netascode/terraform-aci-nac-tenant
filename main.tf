@@ -565,7 +565,7 @@ module "aci_vrf" {
 
 module "aci_bridge_domain" {
   source  = "netascode/bridge-domain/aci"
-  version = "0.2.0"
+  version = "0.2.1"
 
   for_each                   = { for bd in lookup(local.tenant, "bridge_domains", []) : bd.name => bd if lookup(local.modules, "aci_bridge_domain", true) }
   tenant                     = local.tenant.name

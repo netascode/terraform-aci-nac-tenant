@@ -513,7 +513,7 @@ module "aci_tenant" {
 
 module "aci_vrf" {
   source  = "netascode/vrf/aci"
-  version = "0.1.3"
+  version = "0.1.5"
 
   for_each                               = { for vrf in lookup(local.tenant, "vrfs", []) : vrf.name => vrf if lookup(local.modules, "aci_vrf", true) }
   tenant                                 = local.tenant.name
@@ -605,7 +605,7 @@ module "aci_application_profile" {
 
 module "aci_endpoint_group" {
   source  = "netascode/endpoint-group/aci"
-  version = "0.2.1"
+  version = "0.2.2"
 
   for_each                    = { for epg in local.endpoint_groups : epg.key => epg.value if lookup(local.modules, "aci_endpoint_group", true) }
   tenant                      = local.tenant.name
@@ -647,7 +647,7 @@ module "aci_endpoint_group" {
 
 module "aci_endpoint_security_group" {
   source  = "netascode/endpoint-security-group/aci"
-  version = "0.2.1"
+  version = "0.2.3"
 
   for_each             = { for esg in local.endpoint_security_groups : esg.key => esg.value if lookup(local.modules, "aci_endpoint_security_group", true) }
   tenant               = local.tenant.name

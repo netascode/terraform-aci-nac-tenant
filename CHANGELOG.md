@@ -1,6 +1,7 @@
 ## 0.3.3 (unreleased)
 
 - Add QoS attributes to contract
+- Add `managed` flag to tenant (default value `true`) to indicate if a tenant should be created/modified/deleted or is assumed to exist already and just acts a container for other objects
 
 ## 0.3.2
 

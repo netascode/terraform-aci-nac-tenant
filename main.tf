@@ -507,18 +507,19 @@ module "aci_tenant" {
   source  = "netascode/tenant/aci"
   version = "0.1.0"
 
-  count       = lookup(local.modules, "aci_tenant", true) == false ? 0 : 1
+  count       = lookup(local.tenant, "managed", try(local.defaults.apic.tenants.managed, true)) == false || lookup(local.modules, "aci_tenant", true) == false ? 0 : 1
   name        = local.tenant.name
   alias       = lookup(local.tenant, "alias", "")
   description = lookup(local.tenant, "description", "")
 }
+
 
 module "aci_vrf" {
   source  = "netascode/vrf/aci"
   version = "0.1.5"
 
   for_each                               = { for vrf in lookup(local.tenant, "vrfs", []) : vrf.name => vrf if lookup(local.modules, "aci_vrf", true) }
-  tenant                                 = module.aci_tenant[0].name
+  tenant                                 = local.tenant.name
   name                                   = "${each.value.name}${local.defaults.apic.tenants.vrfs.name_suffix}"
   alias                                  = lookup(each.value, "alias", "")
   description                            = lookup(each.value, "description", "")
@@ -555,6 +556,7 @@ module "aci_vrf" {
   }]
 
   depends_on = [
+    module.aci_tenant,
     module.aci_contract,
     module.aci_imported_contract,
     module.aci_bgp_timer_policy,
@@ -566,7 +568,7 @@ module "aci_bridge_domain" {
   version = "0.2.0"
 
   for_each                   = { for bd in lookup(local.tenant, "bridge_domains", []) : bd.name => bd if lookup(local.modules, "aci_bridge_domain", true) }
-  tenant                     = module.aci_tenant[0].name
+  tenant                     = local.tenant.name
   name                       = "${each.value.name}${local.defaults.apic.tenants.bridge_domains.name_suffix}"
   alias                      = lookup(each.value, "alias", "")
   description                = lookup(each.value, "description", "")
@@ -601,6 +603,7 @@ module "aci_bridge_domain" {
   }]
 
   depends_on = [
+    module.aci_tenant,
     module.aci_vrf,
     module.aci_l3out,
     module.aci_dhcp_relay_policy,
@@ -613,10 +616,14 @@ module "aci_application_profile" {
   version = "0.1.0"
 
   for_each    = { for ap in lookup(local.tenant, "application_profiles", []) : ap.name => ap if lookup(local.modules, "aci_application_profile", true) }
-  tenant      = module.aci_tenant[0].name
+  tenant      = local.tenant.name
   name        = "${each.value.name}${local.defaults.apic.tenants.application_profiles.name_suffix}"
   alias       = lookup(each.value, "alias", "")
   description = lookup(each.value, "description", "")
+
+  depends_on = [
+    module.aci_tenant
+  ]
 }
 
 module "aci_endpoint_group" {
@@ -624,7 +631,7 @@ module "aci_endpoint_group" {
   version = "0.2.2"
 
   for_each                    = { for epg in local.endpoint_groups : epg.key => epg.value if lookup(local.modules, "aci_endpoint_group", true) }
-  tenant                      = module.aci_tenant[0].name
+  tenant                      = local.tenant.name
   application_profile         = module.aci_application_profile[each.value.application_profile].name
   name                        = each.value.name
   alias                       = each.value.alias
@@ -655,6 +662,7 @@ module "aci_endpoint_group" {
   subnets            = each.value.subnets
 
   depends_on = [
+    module.aci_tenant,
     module.aci_bridge_domain,
     module.aci_contract,
     module.aci_imported_contract,
@@ -684,6 +692,7 @@ module "aci_endpoint_security_group" {
   ip_subnet_selectors         = each.value.ip_subnet_selectors
 
   depends_on = [
+    module.aci_tenant,
     module.aci_vrf,
     module.aci_contract,
     module.aci_endpoint_group,
@@ -703,6 +712,7 @@ module "aci_inband_endpoint_group" {
   contract_imported_consumers = lookup(lookup(each.value, "contracts", null), "imported_consumers", null) != null ? [for contract in each.value.contracts.imported_consumers : "${contract}${local.defaults.apic.tenants.imported_contracts.name_suffix}"] : []
 
   depends_on = [
+    module.aci_tenant,
     module.aci_contract,
     module.aci_imported_contract,
     module.aci_bridge_domain,
@@ -718,6 +728,7 @@ module "aci_oob_endpoint_group" {
   oob_contract_providers = lookup(lookup(each.value, "oob_contracts", {}), "providers", null) != null ? [for contract in each.value.oob_contracts.providers : "${contract}${local.defaults.apic.tenants.oob_contracts.name_suffix}"] : []
 
   depends_on = [
+    module.aci_tenant,
     module.aci_oob_contract,
   ]
 }
@@ -732,6 +743,7 @@ module "aci_oob_external_management_instance" {
   oob_contract_consumers = lookup(lookup(each.value, "oob_contracts", {}), "consumers", null) != null ? [for contract in each.value.oob_contracts.consumers : "${contract}${local.defaults.apic.tenants.oob_contracts.name_suffix}"] : []
 
   depends_on = [
+    module.aci_tenant,
     module.aci_oob_contract,
   ]
 }
@@ -741,7 +753,7 @@ module "aci_l3out" {
   version = "0.2.0"
 
   for_each                                = { for l3out in local.l3outs : l3out.name => l3out if lookup(local.modules, "aci_l3out", true) }
-  tenant                                  = module.aci_tenant[0].name
+  tenant                                  = local.tenant.name
   name                                    = each.value.name
   alias                                   = each.value.alias
   description                             = each.value.description
@@ -771,6 +783,7 @@ module "aci_l3out" {
   export_route_map_contexts               = each.value.export_route_map_contexts
 
   depends_on = [
+    module.aci_tenant,
     module.aci_vrf,
     module.aci_ospf_interface_policy,
     module.aci_bfd_interface_policy,
@@ -784,13 +797,14 @@ module "aci_l3out_node_profile_manual" {
   version = "0.2.3"
 
   for_each  = { for np in local.node_profiles_manual : np.key => np.value if lookup(local.modules, "aci_l3out_node_profile", true) }
-  tenant    = module.aci_tenant[0].name
+  tenant    = local.tenant.name
   l3out     = each.value.l3out
   name      = each.value.name
   nodes     = each.value.nodes
   bgp_peers = each.value.bgp_peers
 
   depends_on = [
+    module.aci_tenant,
     module.aci_l3out,
   ]
 }
@@ -800,13 +814,14 @@ module "aci_l3out_node_profile_auto" {
   version = "0.2.3"
 
   for_each  = { for np in local.node_profiles_auto : np.name => np if lookup(local.modules, "aci_l3out_node_profile", true) }
-  tenant    = module.aci_tenant[0].name
+  tenant    = local.tenant.name
   l3out     = each.value.l3out
   name      = each.value.name
   nodes     = each.value.nodes
   bgp_peers = each.value.bgp_peers
 
   depends_on = [
+    module.aci_tenant,
     module.aci_l3out,
   ]
 }
@@ -816,7 +831,7 @@ module "aci_l3out_interface_profile_manual" {
   version = "0.2.3"
 
   for_each                    = { for ip in local.interface_profiles_manual : ip.key => ip.value if lookup(local.modules, "aci_l3out_interface_profile", true) }
-  tenant                      = module.aci_tenant[0].name
+  tenant                      = local.tenant.name
   l3out                       = each.value.l3out
   node_profile                = each.value.node_profile
   name                        = each.value.name
@@ -853,6 +868,7 @@ module "aci_l3out_interface_profile_manual" {
   }]
 
   depends_on = [
+    module.aci_tenant,
     module.aci_l3out_node_profile_manual,
   ]
 }
@@ -862,7 +878,7 @@ module "aci_l3out_interface_profile_auto" {
   version = "0.2.3"
 
   for_each                    = { for ip in local.interface_profiles_auto : ip.name => ip if lookup(local.modules, "aci_l3out_interface_profile", true) }
-  tenant                      = module.aci_tenant[0].name
+  tenant                      = local.tenant.name
   l3out                       = each.value.l3out
   node_profile                = each.value.node_profile
   name                        = each.value.name
@@ -899,6 +915,7 @@ module "aci_l3out_interface_profile_auto" {
   }]
 
   depends_on = [
+    module.aci_tenant,
     module.aci_l3out_node_profile_auto,
   ]
 }
@@ -908,7 +925,7 @@ module "aci_external_endpoint_group" {
   version = "0.2.1"
 
   for_each                    = { for epg in local.external_endpoint_groups : epg.key => epg.value if lookup(local.modules, "aci_external_endpoint_group", true) }
-  tenant                      = module.aci_tenant[0].name
+  tenant                      = local.tenant.name
   l3out                       = module.aci_l3out[each.value.l3out].name
   name                        = each.value.name
   alias                       = each.value.alias
@@ -922,6 +939,7 @@ module "aci_external_endpoint_group" {
   subnets                     = each.value.subnets
 
   depends_on = [
+    module.aci_tenant,
     module.aci_contract,
     module.aci_imported_contract,
   ]
@@ -932,7 +950,7 @@ module "aci_filter" {
   version = "0.2.0"
 
   for_each    = { for filter in lookup(local.tenant, "filters", []) : filter.name => filter if lookup(local.modules, "aci_filter", true) }
-  tenant      = module.aci_tenant[0].name
+  tenant      = local.tenant.name
   name        = "${each.value.name}${local.defaults.apic.tenants.filters.name_suffix}"
   alias       = lookup(each.value, "alias", "")
   description = lookup(each.value, "description", "")
@@ -948,6 +966,10 @@ module "aci_filter" {
     destination_to_port   = lookup(entry, "destination_to_port", lookup(entry, "destination_from_port", local.defaults.apic.tenants.filters.entries.destination_from_port))
     stateful              = lookup(entry, "stateful", local.defaults.apic.tenants.filters.entries.stateful)
   }]
+
+  depends_on = [
+    module.aci_tenant,
+  ]
 }
 
 module "aci_contract" {
@@ -955,7 +977,7 @@ module "aci_contract" {
   version = "0.2.1"
 
   for_each    = { for contract in lookup(local.tenant, "contracts", []) : contract.name => contract if lookup(local.modules, "aci_contract", true) }
-  tenant      = module.aci_tenant[0].name
+  tenant      = local.tenant.name
   name        = "${each.value.name}${local.defaults.apic.tenants.contracts.name_suffix}"
   alias       = lookup(each.value, "alias", "")
   description = lookup(each.value, "description", "")
@@ -979,6 +1001,7 @@ module "aci_contract" {
   }]
 
   depends_on = [
+    module.aci_tenant,
     module.aci_filter,
   ]
 }
@@ -1002,6 +1025,7 @@ module "aci_oob_contract" {
   }]
 
   depends_on = [
+    module.aci_tenant,
     module.aci_filter,
   ]
 }
@@ -1011,10 +1035,14 @@ module "aci_imported_contract" {
   version = "0.1.0"
 
   for_each        = { for contract in lookup(local.tenant, "imported_contracts", []) : contract.name => contract if lookup(local.modules, "aci_imported_contract", true) }
-  tenant          = module.aci_tenant[0].name
+  tenant          = local.tenant.name
   name            = "${each.value.name}${local.defaults.apic.tenants.imported_contracts.name_suffix}"
   source_contract = "${each.value.contract}${local.defaults.apic.tenants.contracts.name_suffix}"
   source_tenant   = each.value.tenant
+
+  depends_on = [
+    module.aci_tenant,
+  ]
 }
 
 module "aci_ospf_interface_policy" {
@@ -1022,7 +1050,7 @@ module "aci_ospf_interface_policy" {
   version = "0.1.0"
 
   for_each                = { for policy in lookup(lookup(local.tenant, "policies", {}), "ospf_interface_policies", []) : policy.name => policy if lookup(local.modules, "aci_ospf_interface_policy", true) }
-  tenant                  = module.aci_tenant[0].name
+  tenant                  = local.tenant.name
   name                    = "${each.value.name}${local.defaults.apic.tenants.policies.ospf_interface_policies.name_suffix}"
   description             = lookup(each.value, "description", "")
   cost                    = lookup(each.value, "cost", local.defaults.apic.tenants.policies.ospf_interface_policies.cost)
@@ -1036,6 +1064,11 @@ module "aci_ospf_interface_policy" {
   mtu_ignore              = lookup(each.value, "mtu_ignore", local.defaults.apic.tenants.policies.ospf_interface_policies.mtu_ignore)
   advertise_subnet        = lookup(each.value, "advertise_subnet", local.defaults.apic.tenants.policies.ospf_interface_policies.advertise_subnet)
   bfd                     = lookup(each.value, "bfd", local.defaults.apic.tenants.policies.ospf_interface_policies.bfd)
+
+  depends_on = [
+    module.aci_tenant,
+  ]
+
 }
 
 module "aci_bgp_timer_policy" {
@@ -1043,7 +1076,7 @@ module "aci_bgp_timer_policy" {
   version = "0.1.0"
 
   for_each                = { for pol in lookup(lookup(local.tenant, "policies", {}), "bgp_timer_policies", []) : pol.name => pol if lookup(local.modules, "aci_bgp_timer_policy", true) }
-  tenant                  = module.aci_tenant[0].name
+  tenant                  = local.tenant.name
   name                    = "${each.value.name}${local.defaults.apic.tenants.policies.bgp_timer_policies.name_suffix}"
   description             = lookup(each.value, "description", "")
   graceful_restart_helper = lookup(each.value, "graceful_restart_helper", local.defaults.apic.tenants.policies.bgp_timer_policies.graceful_restart_helper)
@@ -1051,6 +1084,10 @@ module "aci_bgp_timer_policy" {
   keepalive_interval      = lookup(each.value, "keepalive_interval", local.defaults.apic.tenants.policies.bgp_timer_policies.keepalive_interval)
   maximum_as_limit        = lookup(each.value, "maximum_as_limit", local.defaults.apic.tenants.policies.bgp_timer_policies.maximum_as_limit)
   stale_interval          = lookup(each.value, "stale_interval", local.defaults.apic.tenants.policies.bgp_timer_policies.stale_interval)
+
+  depends_on = [
+    module.aci_tenant,
+  ]
 }
 
 module "aci_bgp_address_family_context_policy" {
@@ -1058,7 +1095,7 @@ module "aci_bgp_address_family_context_policy" {
   version = "0.1.0"
 
   for_each               = { for pol in lookup(lookup(local.tenant, "policies", {}), "bgp_address_family_context_policies", []) : pol.name => pol if lookup(local.modules, "aci_bgp_address_family_context_policy", true) }
-  tenant                 = module.aci_tenant[0].name
+  tenant                 = local.tenant.name
   name                   = "${each.value.name}${local.defaults.apic.tenants.policies.bgp_address_family_context_policies.name_suffix}"
   description            = lookup(each.value, "description", "")
   enable_host_route_leak = lookup(each.value, "enable_host_route_leak", local.defaults.apic.tenants.policies.bgp_address_family_context_policies.enable_host_route_leak)
@@ -1068,6 +1105,11 @@ module "aci_bgp_address_family_context_policy" {
   local_max_ecmp         = lookup(each.value, "local_max_ecmp", 0)
   ebgp_max_ecmp          = lookup(each.value, "ebgp_max_ecmp", local.defaults.apic.tenants.policies.bgp_address_family_context_policies.ebgp_max_ecmp)
   ibgp_max_ecmp          = lookup(each.value, "ibgp_max_ecmp", local.defaults.apic.tenants.policies.bgp_address_family_context_policies.ibgp_max_ecmp)
+
+  depends_on = [
+    module.aci_tenant,
+  ]
+
 }
 
 module "aci_dhcp_relay_policy" {
@@ -1075,7 +1117,7 @@ module "aci_dhcp_relay_policy" {
   version = "0.2.0"
 
   for_each    = { for policy in lookup(lookup(local.tenant, "policies", {}), "dhcp_relay_policies", []) : policy.name => policy if lookup(local.modules, "aci_dhcp_relay_policy", true) }
-  tenant      = module.aci_tenant[0].name
+  tenant      = local.tenant.name
   name        = "${each.value.name}${local.defaults.apic.tenants.policies.dhcp_relay_policies.name_suffix}"
   description = lookup(each.value, "description", "")
   providers_ = [for provider in lookup(each.value, "providers", []) : {
@@ -1087,6 +1129,11 @@ module "aci_dhcp_relay_policy" {
     l3out                   = lookup(provider, "l3out", null) != null ? "${provider.l3ou}${local.defaults.apic.tenants.l3outs.name_suffix}" : ""
     external_endpoint_group = lookup(provider, "external_endpoint_group", null) != null ? "${provider.external_endpoint_group}${local.defaults.apic.tenants.l3outs.external_endpoint_groups.name_suffix}" : ""
   }]
+
+  depends_on = [
+    module.aci_tenant,
+  ]
+
 }
 
 module "aci_dhcp_option_policy" {
@@ -1094,10 +1141,15 @@ module "aci_dhcp_option_policy" {
   version = "0.2.0"
 
   for_each    = { for policy in lookup(lookup(local.tenant, "policies", {}), "dhcp_option_policies", []) : policy.name => policy if lookup(local.modules, "aci_dhcp_option_policy", true) }
-  tenant      = module.aci_tenant[0].name
+  tenant      = local.tenant.name
   name        = "${each.value.name}${local.defaults.apic.tenants.policies.dhcp_option_policies.name_suffix}"
   description = lookup(each.value, "description", "")
   options     = lookup(each.value, "options", [])
+
+  depends_on = [
+    module.aci_tenant,
+  ]
+
 }
 
 module "aci_route_control_route_map" {
@@ -1105,7 +1157,7 @@ module "aci_route_control_route_map" {
   version = "0.1.0"
 
   for_each    = { for rm in lookup(lookup(local.tenant, "policies", {}), "route_control_route_maps", []) : rm.name => rm if lookup(local.modules, "aci_route_control_route_map", true) }
-  tenant      = module.aci_tenant[0].name
+  tenant      = local.tenant.name
   name        = "${each.value.name}${local.defaults.apic.tenants.policies.route_control_route_maps.name_suffix}"
   description = lookup(each.value, "description", "")
   contexts = [for ctx in lookup(each.value, "contexts", []) : {
@@ -1116,6 +1168,11 @@ module "aci_route_control_route_map" {
     set_rule    = lookup(ctx, "set_rule", null) != null ? "${ctx.set_rule}${local.defaults.apic.tenants.policies.set_rules.name_suffix}" : ""
     match_rules = [for mr in lookup(ctx, "match_rules", []) : "${mr}${local.defaults.apic.tenants.policies.match_rules.name_suffix}"]
   }]
+
+  depends_on = [
+    module.aci_tenant,
+  ]
+
 }
 
 module "aci_ip_sla_policy" {
@@ -1123,13 +1180,18 @@ module "aci_ip_sla_policy" {
   version = "0.1.0"
 
   for_each    = { for policy in lookup(lookup(local.tenant, "policies", {}), "ip_sla_policies", []) : policy.name => policy if lookup(local.modules, "aci_ip_sla_policy", true) }
-  tenant      = module.aci_tenant[0].name
+  tenant      = local.tenant.name
   name        = "${each.value.name}${local.defaults.apic.tenants.policies.ip_sla_policies.name_suffix}"
   description = lookup(each.value, "description", "")
   multiplier  = lookup(each.value, "multiplier", local.defaults.apic.tenants.policies.ip_sla_policies.multiplier)
   frequency   = lookup(each.value, "frequency", local.defaults.apic.tenants.policies.ip_sla_policies.frequency)
   sla_type    = lookup(each.value, "sla_type", local.defaults.apic.tenants.policies.ip_sla_policies.sla_type)
   port        = lookup(each.value, "port", local.defaults.apic.tenants.policies.ip_sla_policies.port)
+
+  depends_on = [
+    module.aci_tenant,
+  ]
+
 }
 
 module "aci_match_rule" {
@@ -1137,7 +1199,7 @@ module "aci_match_rule" {
   version = "0.2.1"
 
   for_each    = { for rule in lookup(lookup(local.tenant, "policies", {}), "match_rules", []) : rule.name => rule if lookup(local.modules, "aci_match_rule", true) }
-  tenant      = module.aci_tenant[0].name
+  tenant      = local.tenant.name
   name        = "${each.value.name}${local.defaults.apic.tenants.policies.match_rules.name_suffix}"
   description = lookup(each.value, "description", "")
   regex_community_terms = [for regex in lookup(each.value, "regex_community_terms", []) : {
@@ -1162,6 +1224,11 @@ module "aci_match_rule" {
     from_length = lookup(prefix, "from_length", local.defaults.apic.tenants.policies.match_rules.prefixes.from_length)
     to_length   = lookup(prefix, "to_length", local.defaults.apic.tenants.policies.match_rules.prefixes.to_length)
   }]
+
+  depends_on = [
+    module.aci_tenant,
+  ]
+
 }
 
 module "aci_set_rule" {
@@ -1169,7 +1236,7 @@ module "aci_set_rule" {
   version = "0.2.2"
 
   for_each                    = { for rule in lookup(lookup(local.tenant, "policies", {}), "set_rules", []) : rule.name => rule if lookup(local.modules, "aci_set_rule", true) }
-  tenant                      = module.aci_tenant[0].name
+  tenant                      = local.tenant.name
   name                        = "${each.value.name}${local.defaults.apic.tenants.policies.set_rules.name_suffix}"
   description                 = lookup(each.value, "description", "")
   community                   = lookup(each.value, "community", "")
@@ -1198,6 +1265,10 @@ module "aci_set_rule" {
   set_as_path_asn      = lookup(lookup(each.value, "set_as_path ", {}), "asn", null)
   next_hop_propagation = lookup(each.value, "next_hop_propagation", local.defaults.apic.tenants.policies.set_rules.next_hop_propagation)
   multipath            = lookup(each.value, "multipath", local.defaults.apic.tenants.policies.set_rules.multipath)
+
+  depends_on = [
+    module.aci_tenant,
+  ]
 }
 
 module "aci_bfd_interface_policy" {
@@ -1205,7 +1276,7 @@ module "aci_bfd_interface_policy" {
   version = "0.1.0"
 
   for_each                  = { for pol in lookup(lookup(local.tenant, "policies", {}), "bfd_interface_policies", []) : pol.name => pol if lookup(local.modules, "aci_bfd_interface_policy", true) }
-  tenant                    = module.aci_tenant[0].name
+  tenant                    = local.tenant.name
   name                      = "${each.value.name}${local.defaults.apic.tenants.policies.bfd_interface_policies.name_suffix}"
   description               = lookup(each.value, "description", "")
   subinterface_optimization = lookup(each.value, "subinterface_optimization", local.defaults.apic.tenants.policies.bfd_interface_policies.subinterface_optimization)
@@ -1214,6 +1285,10 @@ module "aci_bfd_interface_policy" {
   echo_rx_interval          = lookup(each.value, "echo_rx_interval", local.defaults.apic.tenants.policies.bfd_interface_policies.echo_rx_interval)
   min_rx_interval           = lookup(each.value, "min_rx_interval", local.defaults.apic.tenants.policies.bfd_interface_policies.min_rx_interval)
   min_tx_interval           = lookup(each.value, "min_tx_interval", local.defaults.apic.tenants.policies.bfd_interface_policies.min_tx_interval)
+
+  depends_on = [
+    module.aci_tenant,
+  ]
 }
 
 module "aci_qos_policy" {
@@ -1221,7 +1296,7 @@ module "aci_qos_policy" {
   version = "0.1.2"
 
   for_each    = { for pol in lookup(lookup(local.tenant, "policies", {}), "qos", []) : pol.name => pol if lookup(local.modules, "aci_qos_policy", true) }
-  tenant      = module.aci_tenant[0].name
+  tenant      = local.tenant.name
   name        = "${each.value.name}${local.defaults.apic.tenants.policies.qos.name_suffix}"
   description = lookup(each.value, "description", "")
   alias       = lookup(each.value, "alias", "")
@@ -1243,6 +1318,10 @@ module "aci_qos_policy" {
       cos_target  = lookup(c, "cos_target", local.defaults.apic.tenants.policies.qos.dot1p_classifiers.cos_target)
     }
   ]
+
+  depends_on = [
+    module.aci_tenant,
+  ]
 }
 
 module "aci_l4l7_device" {
@@ -1250,7 +1329,7 @@ module "aci_l4l7_device" {
   version = "0.2.3"
 
   for_each         = { for device in local.l4l7_devices : device.name => device if lookup(local.modules, "aci_l4l7_device", true) }
-  tenant           = module.aci_tenant[0].name
+  tenant           = local.tenant.name
   name             = each.value.name
   alias            = each.value.alias
   context_aware    = each.value.context_aware
@@ -1284,6 +1363,10 @@ module "aci_l4l7_device" {
     }]
   }]
   logical_interfaces = each.value.logical_interfaces
+
+  depends_on = [
+    module.aci_tenant,
+  ]
 }
 
 module "aci_redirect_policy" {
@@ -1291,7 +1374,7 @@ module "aci_redirect_policy" {
   version = "0.2.1"
 
   for_each               = { for policy in lookup(lookup(local.tenant, "services", {}), "redirect_policies", []) : policy.name => policy if lookup(local.modules, "aci_redirect_policy", true) }
-  tenant                 = module.aci_tenant[0].name
+  tenant                 = local.tenant.name
   name                   = "${each.value.name}${local.defaults.apic.tenants.services.redirect_policies.name_suffix}"
   alias                  = lookup(each.value, "alias", "")
   description            = lookup(each.value, "description", "")
@@ -1314,6 +1397,10 @@ module "aci_redirect_policy" {
     pod_id                = lookup(dest, "pod", local.defaults.apic.tenants.services.redirect_policies.l3_destinations.pod)
     redirect_health_group = lookup(dest, "redirect_health_group", null) != null ? "${dest.redirect_health_group}${local.defaults.apic.tenants.services.redirect_health_groups.name_suffix}" : ""
   }]
+
+  depends_on = [
+    module.aci_tenant,
+  ]
 }
 
 module "aci_redirect_health_group" {
@@ -1321,9 +1408,13 @@ module "aci_redirect_health_group" {
   version = "0.1.0"
 
   for_each    = { for health_group in lookup(lookup(local.tenant, "services", {}), "redirect_health_groups", []) : health_group.name => health_group if lookup(local.modules, "aci_redirect_health_group", true) }
-  tenant      = module.aci_tenant[0].name
+  tenant      = local.tenant.name
   name        = "${each.value.name}${local.defaults.apic.tenants.services.redirect_health_groups.name_suffix}"
   description = lookup(each.value, "description", "")
+
+  depends_on = [
+    module.aci_tenant,
+  ]
 }
 
 module "aci_service_graph_template" {
@@ -1331,7 +1422,7 @@ module "aci_service_graph_template" {
   version = "0.1.0"
 
   for_each            = { for sg_template in lookup(lookup(local.tenant, "services", {}), "service_graph_templates", []) : sg_template.name => sg_template if lookup(local.modules, "aci_service_graph_template", true) }
-  tenant              = module.aci_tenant[0].name
+  tenant              = local.tenant.name
   name                = "${each.value.name}${local.defaults.apic.tenants.services.service_graph_templates.name_suffix}"
   description         = lookup(each.value, "description", "")
   alias               = lookup(each.value, "alias", "")
@@ -1339,12 +1430,13 @@ module "aci_service_graph_template" {
   redirect            = lookup(each.value, "redirect", local.defaults.apic.tenants.services.service_graph_templates.redirect)
   share_encapsulation = lookup(each.value, "share_encapsulation", local.defaults.apic.tenants.services.service_graph_templates.share_encapsulation)
   device_name         = "${each.value.device.name}${local.defaults.apic.tenants.services.l4l7_devices.name_suffix}"
-  device_tenant       = lookup(each.value.device, "tenant", module.aci_tenant[0].name)
+  device_tenant       = lookup(each.value.device, "tenant", local.tenant.name)
   device_function     = length(local.l4l7_devices) != 0 ? [for device in local.l4l7_devices : lookup(device, "function", []) if device.name == each.value.device.name][0] : "None"
   device_copy         = (length(local.l4l7_devices) != 0 ? [for device in local.l4l7_devices : lookup(device, "copy_device", []) if device.name == each.value.device.name][0] : false)
   device_managed      = (length(local.l4l7_devices) != 0 ? [for device in local.l4l7_devices : lookup(device, "managed", []) if device.name == each.value.device.name][0] : false)
 
   depends_on = [
+    module.aci_tenant,
     module.aci_l4l7_device,
   ]
 }
@@ -1354,21 +1446,21 @@ module "aci_device_selection_policy" {
   version = "0.1.0"
 
   for_each                                                = { for pol in lookup(lookup(local.tenant, "services", {}), "device_selection_policies", []) : "${pol.contract}/${pol.service_graph_template}" => pol if lookup(local.modules, "aci_device_selection_policy", true) }
-  tenant                                                  = module.aci_tenant[0].name
+  tenant                                                  = local.tenant.name
   contract                                                = "${each.value.contract}${local.defaults.apic.tenants.contracts.name_suffix}"
   service_graph_template                                  = "${each.value.service_graph_template}${local.defaults.apic.tenants.services.service_graph_templates.name_suffix}"
-  sgt_device_tenant                                       = length(lookup(lookup(local.tenant, "services", {}), "service_graph_templates", [])) != 0 ? [for sg_template in lookup(lookup(local.tenant, "services", {}), "service_graph_templates", []) : lookup(sg_template.device, "tenant", module.aci_tenant[0].name) if sg_template.name == each.value.service_graph_template][0] : module.aci_tenant[0].name
+  sgt_device_tenant                                       = length(lookup(lookup(local.tenant, "services", {}), "service_graph_templates", [])) != 0 ? [for sg_template in lookup(lookup(local.tenant, "services", {}), "service_graph_templates", []) : lookup(sg_template.device, "tenant", local.tenant.name) if sg_template.name == each.value.service_graph_template][0] : local.tenant.name
   sgt_device_name                                         = length(lookup(lookup(local.tenant, "services", {}), "service_graph_templates", [])) != 0 ? [for sg_template in lookup(lookup(local.tenant, "services", {}), "service_graph_templates", []) : "${sg_template.device.name}${local.defaults.apic.tenants.services.l4l7_devices.name_suffix}" if sg_template.name == each.value.service_graph_template][0] : ""
   consumer_l3_destination                                 = lookup(each.value.consumer, "l3_destination", local.defaults.apic.tenants.services.device_selection_policies.consumer.l3_destination)
   consumer_permit_logging                                 = lookup(each.value.consumer, "permit_logging", local.defaults.apic.tenants.services.device_selection_policies.consumer.permit_logging)
   consumer_logical_interface                              = "${each.value.consumer.logical_interface}${local.defaults.apic.tenants.services.l4l7_devices.logical_interfaces.name_suffix}"
   consumer_redirect_policy                                = lookup(each.value.consumer, "redirect_policy", null) != null ? "${each.value.consumer.redirect_policy.name}${local.defaults.apic.tenants.services.redirect_policies.name_suffix}" : ""
-  consumer_redirect_policy_tenant                         = lookup(lookup(each.value.consumer, "redirect_policy", {}), "tenant", module.aci_tenant[0].name)
+  consumer_redirect_policy_tenant                         = lookup(lookup(each.value.consumer, "redirect_policy", {}), "tenant", local.tenant.name)
   consumer_bridge_domain                                  = lookup(each.value.consumer, "bridge_domain", null) != null ? "${each.value.consumer.bridge_domain.name}${local.defaults.apic.tenants.bridge_domains.name_suffix}" : ""
-  consumer_bridge_domain_tenant                           = lookup(lookup(each.value.consumer, "bridge_domain", {}), "tenant", module.aci_tenant[0].name)
+  consumer_bridge_domain_tenant                           = lookup(lookup(each.value.consumer, "bridge_domain", {}), "tenant", local.tenant.name)
   consumer_external_endpoint_group                        = lookup(each.value.consumer, "external_endpoint_group", null) != null ? "${each.value.consumer.external_endpoint_group.name}${local.defaults.apic.tenants.l3outs.external_endpoint_groups.name_suffix}" : ""
   consumer_external_endpoint_group_l3out                  = lookup(each.value.consumer, "external_endpoint_group", null) != null ? "${each.value.consumer.external_endpoint_group.l3out}${local.defaults.apic.tenants.l3outs.name_suffix}" : ""
-  consumer_external_endpoint_group_tenant                 = lookup(lookup(each.value.consumer, "external_endpoint_group", {}), "tenant", module.aci_tenant[0].name)
+  consumer_external_endpoint_group_tenant                 = lookup(lookup(each.value.consumer, "external_endpoint_group", {}), "tenant", local.tenant.name)
   consumer_external_endpoint_group_redistribute_bgp       = lookup(lookup(lookup(each.value.consumer, "external_endpoint_group", {}), "redistribute", {}), "bgp", local.defaults.apic.tenants.services.device_selection_policies.consumer.external_endpoint_group.redistribute.bgp)
   consumer_external_endpoint_group_redistribute_ospf      = lookup(lookup(lookup(each.value.consumer, "external_endpoint_group", {}), "redistribute", {}), "ospf", local.defaults.apic.tenants.services.device_selection_policies.consumer.external_endpoint_group.redistribute.ospf)
   consumer_external_endpoint_group_redistribute_connected = lookup(lookup(lookup(each.value.consumer, "external_endpoint_group", {}), "redistribute", {}), "connected", local.defaults.apic.tenants.services.device_selection_policies.consumer.external_endpoint_group.redistribute.connected)
@@ -1377,18 +1469,19 @@ module "aci_device_selection_policy" {
   provider_permit_logging                                 = lookup(each.value.provider, "permit_logging", local.defaults.apic.tenants.services.device_selection_policies.provider.permit_logging)
   provider_logical_interface                              = "${each.value.provider.logical_interface}${local.defaults.apic.tenants.services.l4l7_devices.logical_interfaces.name_suffix}"
   provider_redirect_policy                                = lookup(each.value.provider, "redirect_policy", null) != null ? "${each.value.provider.redirect_policy.name}${local.defaults.apic.tenants.services.redirect_policies.name_suffix}" : ""
-  provider_redirect_policy_tenant                         = lookup(lookup(each.value.provider, "redirect_policy", {}), "tenant", module.aci_tenant[0].name)
+  provider_redirect_policy_tenant                         = lookup(lookup(each.value.provider, "redirect_policy", {}), "tenant", local.tenant.name)
   provider_bridge_domain                                  = lookup(each.value.provider, "bridge_domain", null) != null ? "${each.value.provider.bridge_domain.name}${local.defaults.apic.tenants.bridge_domains.name_suffix}" : ""
-  provider_bridge_domain_tenant                           = lookup(lookup(each.value.provider, "bridge_domain", {}), "tenant", module.aci_tenant[0].name)
+  provider_bridge_domain_tenant                           = lookup(lookup(each.value.provider, "bridge_domain", {}), "tenant", local.tenant.name)
   provider_external_endpoint_group                        = lookup(each.value.provider, "external_endpoint_group", null) != null ? "${each.value.provider.external_endpoint_group.name}${local.defaults.apic.tenants.l3outs.external_endpoint_groups.name_suffix}" : ""
   provider_external_endpoint_group_l3out                  = lookup(each.value.provider, "external_endpoint_group", null) != null ? "${each.value.provider.external_endpoint_group.l3out}${local.defaults.apic.tenants.l3outs.name_suffix}" : ""
-  provider_external_endpoint_group_tenant                 = lookup(lookup(each.value.provider, "external_endpoint_group", {}), "tenant", module.aci_tenant[0].name)
+  provider_external_endpoint_group_tenant                 = lookup(lookup(each.value.provider, "external_endpoint_group", {}), "tenant", local.tenant.name)
   provider_external_endpoint_group_redistribute_bgp       = lookup(lookup(lookup(each.value.provider, "external_endpoint_group", {}), "redistribute", {}), "bgp", local.defaults.apic.tenants.services.device_selection_policies.provider.external_endpoint_group.redistribute.bgp)
   provider_external_endpoint_group_redistribute_ospf      = lookup(lookup(lookup(each.value.provider, "external_endpoint_group", {}), "redistribute", {}), "ospf", local.defaults.apic.tenants.services.device_selection_policies.provider.external_endpoint_group.redistribute.ospf)
   provider_external_endpoint_group_redistribute_connected = lookup(lookup(lookup(each.value.provider, "external_endpoint_group", {}), "redistribute", {}), "connected", local.defaults.apic.tenants.services.device_selection_policies.provider.external_endpoint_group.redistribute.connected)
   provider_external_endpoint_group_redistribute_static    = lookup(lookup(lookup(each.value.provider, "external_endpoint_group", {}), "redistribute", {}), "static", local.defaults.apic.tenants.services.device_selection_policies.provider.external_endpoint_group.redistribute.static)
 
   depends_on = [
+    module.aci_tenant,
     module.aci_l4l7_device,
     module.aci_service_graph_template,
     module.aci_redirect_policy,

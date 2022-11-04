@@ -1,3 +1,7 @@
+## 0.3.3 (unreleased)
+
+- Add QoS attributes to contract
+
 ## 0.3.2
 
 - Add support for L4-L7 device logical interfaces without encap

@@ -952,7 +952,7 @@ module "aci_filter" {
 
 module "aci_contract" {
   source  = "netascode/contract/aci"
-  version = "0.2.0"
+  version = "0.2.1"
 
   for_each    = { for contract in lookup(local.tenant, "contracts", []) : contract.name => contract if lookup(local.modules, "aci_contract", true) }
   tenant      = module.aci_tenant[0].name
@@ -960,11 +960,15 @@ module "aci_contract" {
   alias       = lookup(each.value, "alias", "")
   description = lookup(each.value, "description", "")
   scope       = lookup(each.value, "scope", local.defaults.apic.tenants.contracts.scope)
+  qos_class   = lookup(each.value, "qos_class", local.defaults.apic.tenants.contracts.qos_class)
+  target_dscp = lookup(each.value, "target_dscp", local.defaults.apic.tenants.contracts.target_dscp)
   subjects = [for subject in lookup(each.value, "subjects", []) : {
     name          = "${subject.name}${local.defaults.apic.tenants.contracts.subjects.name_suffix}"
     alias         = lookup(subject, "alias", "")
     description   = lookup(subject, "description", "")
     service_graph = lookup(subject, "service_graph", null) != null ? "${subject.service_graph}${local.defaults.apic.tenants.services.service_graph_templates.name_suffix}" : null
+    qos_class     = lookup(subject, "qos_class", local.defaults.apic.tenants.contracts.subjects.qos_class)
+    target_dscp   = lookup(subject, "target_dscp", local.defaults.apic.tenants.contracts.subjects.target_dscp)
     filters = [for filter in lookup(subject, "filters", []) : {
       filter   = "${filter.filter}${local.defaults.apic.tenants.filters.name_suffix}"
       action   = lookup(filter, "action", local.defaults.apic.tenants.contracts.subjects.filters.action)

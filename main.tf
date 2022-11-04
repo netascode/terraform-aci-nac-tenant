@@ -615,7 +615,7 @@ module "aci_application_profile" {
   source  = "netascode/application-profile/aci"
   version = "0.1.0"
 
-  for_each    = { for ap in lookup(local.tenant, "application_profiles", []) : ap.name => ap if lookup(local.modules, "aci_application_profile", true) }
+  for_each    = { for ap in lookup(local.tenant, "application_profiles", []) : ap.name => ap if lookup(ap, "managed", try(local.defaults.apic.tenants.application_profiles.managed, true)) == true && lookup(local.modules, "aci_application_profile", true) }
   tenant      = local.tenant.name
   name        = "${each.value.name}${local.defaults.apic.tenants.application_profiles.name_suffix}"
   alias       = lookup(each.value, "alias", "")
@@ -632,7 +632,7 @@ module "aci_endpoint_group" {
 
   for_each                    = { for epg in local.endpoint_groups : epg.key => epg.value if lookup(local.modules, "aci_endpoint_group", true) }
   tenant                      = local.tenant.name
-  application_profile         = module.aci_application_profile[each.value.application_profile].name
+  application_profile         = each.value.application_profile
   name                        = each.value.name
   alias                       = each.value.alias
   description                 = each.value.description
@@ -663,6 +663,7 @@ module "aci_endpoint_group" {
 
   depends_on = [
     module.aci_tenant,
+    module.aci_application_profile,
     module.aci_bridge_domain,
     module.aci_contract,
     module.aci_imported_contract,
@@ -674,8 +675,8 @@ module "aci_endpoint_security_group" {
   version = "0.2.3"
 
   for_each                    = { for esg in local.endpoint_security_groups : esg.key => esg.value if lookup(local.modules, "aci_endpoint_security_group", true) }
-  tenant                      = module.aci_tenant[0].name
-  application_profile         = module.aci_application_profile[each.value.application_profile].name
+  tenant                      = local.tenant.name
+  application_profile         = each.value.application_profile
   name                        = each.value.name
   description                 = each.value.description
   vrf                         = each.value.vrf
@@ -693,6 +694,7 @@ module "aci_endpoint_security_group" {
 
   depends_on = [
     module.aci_tenant,
+    module.aci_application_profile,
     module.aci_vrf,
     module.aci_contract,
     module.aci_endpoint_group,

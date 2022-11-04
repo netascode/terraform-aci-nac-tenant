@@ -504,7 +504,7 @@ module "aci_tenant" {
   source  = "netascode/tenant/aci"
   version = "0.1.0"
 
-  count       = lookup(local.modules, "aci_tenant", true) == false && local.tenant.managed == false ? 0 : 1
+  count       = lookup(local.tenant, "managed", try(local.defaults.apic.tenants.managed, true)) == false ? 0 : 1
   name        = local.tenant.name
   alias       = lookup(local.tenant, "alias", "")
   description = lookup(local.tenant, "description", "")
@@ -533,6 +533,7 @@ module "aci_vrf" {
   dns_labels                             = lookup(each.value, "dns_labels", [])
 
   depends_on = [
+    module.aci_tenant,
     module.aci_contract,
     module.aci_imported_contract,
     module.aci_bgp_timer_policy,
@@ -579,6 +580,7 @@ module "aci_bridge_domain" {
   }]
 
   depends_on = [
+    module.aci_tenant,
     module.aci_vrf,
     module.aci_l3out,
     module.aci_dhcp_relay_policy,
@@ -595,6 +597,10 @@ module "aci_application_profile" {
   name        = "${each.value.name}${local.defaults.apic.tenants.application_profiles.name_suffix}"
   alias       = lookup(each.value, "alias", "")
   description = lookup(each.value, "description", "")
+
+  depends_on = [
+    module.aci_tenant
+  ]
 }
 
 module "aci_endpoint_group" {
@@ -632,6 +638,7 @@ module "aci_endpoint_group" {
   subnets            = each.value.subnets
 
   depends_on = [
+    module.aci_tenant,
     module.aci_bridge_domain,
     module.aci_contract,
     module.aci_imported_contract,
@@ -659,6 +666,7 @@ module "aci_endpoint_security_group" {
   ip_subnet_selectors  = each.value.ip_subnet_selectors
 
   depends_on = [
+    module.aci_tenant,
     module.aci_vrf,
     module.aci_contract,
   ]
@@ -677,6 +685,7 @@ module "aci_inband_endpoint_group" {
   contract_imported_consumers = lookup(lookup(each.value, "contracts", null), "imported_consumers", null) != null ? [for contract in each.value.contracts.imported_consumers : "${contract}${local.defaults.apic.tenants.imported_contracts.name_suffix}"] : []
 
   depends_on = [
+    module.aci_tenant,
     module.aci_contract,
     module.aci_imported_contract,
     module.aci_bridge_domain,
@@ -692,6 +701,7 @@ module "aci_oob_endpoint_group" {
   oob_contract_providers = lookup(lookup(each.value, "oob_contracts", {}), "providers", null) != null ? [for contract in each.value.oob_contracts.providers : "${contract}${local.defaults.apic.tenants.oob_contracts.name_suffix}"] : []
 
   depends_on = [
+    module.aci_tenant,
     module.aci_oob_contract,
   ]
 }
@@ -706,6 +716,7 @@ module "aci_oob_external_management_instance" {
   oob_contract_consumers = lookup(lookup(each.value, "oob_contracts", {}), "consumers", null) != null ? [for contract in each.value.oob_contracts.consumers : "${contract}${local.defaults.apic.tenants.oob_contracts.name_suffix}"] : []
 
   depends_on = [
+    module.aci_tenant,
     module.aci_oob_contract,
   ]
 }
@@ -745,6 +756,7 @@ module "aci_l3out" {
   export_route_map_contexts               = each.value.export_route_map_contexts
 
   depends_on = [
+    module.aci_tenant,
     module.aci_vrf,
     module.aci_ospf_interface_policy,
     module.aci_bfd_interface_policy,
@@ -765,6 +777,7 @@ module "aci_l3out_node_profile_manual" {
   bgp_peers = each.value.bgp_peers
 
   depends_on = [
+    module.aci_tenant,
     module.aci_l3out,
   ]
 }
@@ -781,6 +794,7 @@ module "aci_l3out_node_profile_auto" {
   bgp_peers = each.value.bgp_peers
 
   depends_on = [
+    module.aci_tenant,
     module.aci_l3out,
   ]
 }
@@ -827,6 +841,7 @@ module "aci_l3out_interface_profile_manual" {
   }]
 
   depends_on = [
+    module.aci_tenant,
     module.aci_l3out_node_profile_manual,
   ]
 }
@@ -873,6 +888,7 @@ module "aci_l3out_interface_profile_auto" {
   }]
 
   depends_on = [
+    module.aci_tenant,
     module.aci_l3out_node_profile_auto,
   ]
 }
@@ -896,6 +912,7 @@ module "aci_external_endpoint_group" {
   subnets                     = each.value.subnets
 
   depends_on = [
+    module.aci_tenant,
     module.aci_contract,
     module.aci_imported_contract,
   ]
@@ -922,6 +939,10 @@ module "aci_filter" {
     destination_to_port   = lookup(entry, "destination_to_port", lookup(entry, "destination_from_port", local.defaults.apic.tenants.filters.entries.destination_from_port))
     stateful              = lookup(entry, "stateful", local.defaults.apic.tenants.filters.entries.stateful)
   }]
+
+  depends_on = [
+    module.aci_tenant,
+  ]
 }
 
 module "aci_contract" {
@@ -949,6 +970,7 @@ module "aci_contract" {
   }]
 
   depends_on = [
+    module.aci_tenant,
     module.aci_filter,
   ]
 }
@@ -972,6 +994,7 @@ module "aci_oob_contract" {
   }]
 
   depends_on = [
+    module.aci_tenant,
     module.aci_filter,
   ]
 }
@@ -985,6 +1008,10 @@ module "aci_imported_contract" {
   name            = "${each.value.name}${local.defaults.apic.tenants.imported_contracts.name_suffix}"
   source_contract = "${each.value.contract}${local.defaults.apic.tenants.contracts.name_suffix}"
   source_tenant   = each.value.tenant
+
+  depends_on = [
+    module.aci_tenant,
+  ]
 }
 
 module "aci_ospf_interface_policy" {
@@ -1006,6 +1033,11 @@ module "aci_ospf_interface_policy" {
   mtu_ignore              = lookup(each.value, "mtu_ignore", local.defaults.apic.tenants.policies.ospf_interface_policies.mtu_ignore)
   advertise_subnet        = lookup(each.value, "advertise_subnet", local.defaults.apic.tenants.policies.ospf_interface_policies.advertise_subnet)
   bfd                     = lookup(each.value, "bfd", local.defaults.apic.tenants.policies.ospf_interface_policies.bfd)
+
+  depends_on = [
+    module.aci_tenant,
+  ]
+
 }
 
 module "aci_bgp_timer_policy" {
@@ -1021,6 +1053,10 @@ module "aci_bgp_timer_policy" {
   keepalive_interval      = lookup(each.value, "keepalive_interval", local.defaults.apic.tenants.policies.bgp_timer_policies.keepalive_interval)
   maximum_as_limit        = lookup(each.value, "maximum_as_limit", local.defaults.apic.tenants.policies.bgp_timer_policies.maximum_as_limit)
   stale_interval          = lookup(each.value, "stale_interval", local.defaults.apic.tenants.policies.bgp_timer_policies.stale_interval)
+
+  depends_on = [
+    module.aci_tenant,
+  ]
 }
 
 module "aci_bgp_address_family_context_policy" {
@@ -1038,6 +1074,11 @@ module "aci_bgp_address_family_context_policy" {
   local_max_ecmp         = lookup(each.value, "local_max_ecmp", 0)
   ebgp_max_ecmp          = lookup(each.value, "ebgp_max_ecmp", local.defaults.apic.tenants.policies.bgp_address_family_context_policies.ebgp_max_ecmp)
   ibgp_max_ecmp          = lookup(each.value, "ibgp_max_ecmp", local.defaults.apic.tenants.policies.bgp_address_family_context_policies.ibgp_max_ecmp)
+
+  depends_on = [
+    module.aci_tenant,
+  ]
+
 }
 
 module "aci_dhcp_relay_policy" {
@@ -1057,6 +1098,11 @@ module "aci_dhcp_relay_policy" {
     l3out                   = lookup(provider, "l3out", null) != null ? "${provider.l3ou}${local.defaults.apic.tenants.l3outs.name_suffix}" : ""
     external_endpoint_group = lookup(provider, "external_endpoint_group", null) != null ? "${provider.external_endpoint_group}${local.defaults.apic.tenants.l3outs.external_endpoint_groups.name_suffix}" : ""
   }]
+
+  depends_on = [
+    module.aci_tenant,
+  ]
+
 }
 
 module "aci_dhcp_option_policy" {
@@ -1068,6 +1114,11 @@ module "aci_dhcp_option_policy" {
   name        = "${each.value.name}${local.defaults.apic.tenants.policies.dhcp_option_policies.name_suffix}"
   description = lookup(each.value, "description", "")
   options     = lookup(each.value, "options", [])
+
+  depends_on = [
+    module.aci_tenant,
+  ]
+
 }
 
 module "aci_route_control_route_map" {
@@ -1086,6 +1137,11 @@ module "aci_route_control_route_map" {
     set_rule    = lookup(ctx, "set_rule", null) != null ? "${ctx.set_rule}${local.defaults.apic.tenants.policies.set_rules.name_suffix}" : ""
     match_rules = [for mr in lookup(ctx, "match_rules", []) : "${mr}${local.defaults.apic.tenants.policies.match_rules.name_suffix}"]
   }]
+
+  depends_on = [
+    module.aci_tenant,
+  ]
+
 }
 
 module "aci_ip_sla_policy" {
@@ -1100,6 +1156,11 @@ module "aci_ip_sla_policy" {
   frequency   = lookup(each.value, "frequency", local.defaults.apic.tenants.policies.ip_sla_policies.frequency)
   sla_type    = lookup(each.value, "sla_type", local.defaults.apic.tenants.policies.ip_sla_policies.sla_type)
   port        = lookup(each.value, "port", local.defaults.apic.tenants.policies.ip_sla_policies.port)
+
+  depends_on = [
+    module.aci_tenant,
+  ]
+
 }
 
 module "aci_match_rule" {
@@ -1132,6 +1193,11 @@ module "aci_match_rule" {
     from_length = lookup(prefix, "from_length", local.defaults.apic.tenants.policies.match_rules.prefixes.from_length)
     to_length   = lookup(prefix, "to_length", local.defaults.apic.tenants.policies.match_rules.prefixes.to_length)
   }]
+
+  depends_on = [
+    module.aci_tenant,
+  ]
+
 }
 
 module "aci_set_rule" {
@@ -1168,6 +1234,10 @@ module "aci_set_rule" {
   set_as_path_asn      = lookup(lookup(each.value, "set_as_path ", {}), "asn", null)
   next_hop_propagation = lookup(each.value, "next_hop_propagation", local.defaults.apic.tenants.policies.set_rules.next_hop_propagation)
   multipath            = lookup(each.value, "multipath", local.defaults.apic.tenants.policies.set_rules.multipath)
+
+  depends_on = [
+    module.aci_tenant,
+  ]
 }
 
 module "aci_bfd_interface_policy" {
@@ -1184,6 +1254,10 @@ module "aci_bfd_interface_policy" {
   echo_rx_interval          = lookup(each.value, "echo_rx_interval", local.defaults.apic.tenants.policies.bfd_interface_policies.echo_rx_interval)
   min_rx_interval           = lookup(each.value, "min_rx_interval", local.defaults.apic.tenants.policies.bfd_interface_policies.min_rx_interval)
   min_tx_interval           = lookup(each.value, "min_tx_interval", local.defaults.apic.tenants.policies.bfd_interface_policies.min_tx_interval)
+
+  depends_on = [
+    module.aci_tenant,
+  ]
 }
 
 module "aci_qos_policy" {
@@ -1212,6 +1286,10 @@ module "aci_qos_policy" {
       dscp_target = lookup(c, "dscp_target", local.defaults.apic.tenants.policies.qos.dot1p_classifiers.dscp_target)
       cos_target  = lookup(c, "cos_target", local.defaults.apic.tenants.policies.qos.dot1p_classifiers.cos_target)
     }
+  ]
+
+  depends_on = [
+    module.aci_tenant,
   ]
 }
 
@@ -1254,6 +1332,10 @@ module "aci_l4l7_device" {
     }]
   }]
   logical_interfaces = each.value.logical_interfaces
+
+  depends_on = [
+    module.aci_tenant,
+  ]
 }
 
 module "aci_redirect_policy" {
@@ -1284,6 +1366,10 @@ module "aci_redirect_policy" {
     pod_id                = lookup(dest, "pod", local.defaults.apic.tenants.services.redirect_policies.l3_destinations.pod)
     redirect_health_group = lookup(dest, "redirect_health_group", null) != null ? "${dest.redirect_health_group}${local.defaults.apic.tenants.services.redirect_health_groups.name_suffix}" : ""
   }]
+
+  depends_on = [
+    module.aci_tenant,
+  ]
 }
 
 module "aci_redirect_health_group" {
@@ -1294,6 +1380,10 @@ module "aci_redirect_health_group" {
   tenant      = local.tenant.name
   name        = "${each.value.name}${local.defaults.apic.tenants.services.redirect_health_groups.name_suffix}"
   description = lookup(each.value, "description", "")
+
+  depends_on = [
+    module.aci_tenant,
+  ]
 }
 
 module "aci_service_graph_template" {
@@ -1315,6 +1405,7 @@ module "aci_service_graph_template" {
   device_managed      = (length(local.l4l7_devices) != 0 ? [for device in local.l4l7_devices : lookup(device, "managed", []) if device.name == each.value.device.name][0] : false)
 
   depends_on = [
+    module.aci_tenant,
     module.aci_l4l7_device,
   ]
 }
@@ -1359,6 +1450,7 @@ module "aci_device_selection_policy" {
   provider_external_endpoint_group_redistribute_static    = lookup(lookup(lookup(each.value.provider, "external_endpoint_group", {}), "redistribute", {}), "static", local.defaults.apic.tenants.services.device_selection_policies.provider.external_endpoint_group.redistribute.static)
 
   depends_on = [
+    module.aci_tenant,
     module.aci_l4l7_device,
     module.aci_service_graph_template,
     module.aci_redirect_policy,

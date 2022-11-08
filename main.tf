@@ -1128,7 +1128,7 @@ module "aci_dhcp_relay_policy" {
     tenant                  = lookup(provider, "tenant", local.tenant.name)
     application_profile     = lookup(provider, "application_profile", null) != null ? "${provider.application_profile}${local.defaults.apic.tenants.application_profiles.name_suffix}" : ""
     endpoint_group          = lookup(provider, "endpoint_group", null) != null ? "${provider.endpoint_group}${local.defaults.apic.tenants.application_profiles.endpoint_groups.name_suffix}" : ""
-    l3out                   = lookup(provider, "l3out", null) != null ? "${provider.l3ou}${local.defaults.apic.tenants.l3outs.name_suffix}" : ""
+    l3out                   = lookup(provider, "l3out", null) != null ? "${provider.l3out}${local.defaults.apic.tenants.l3outs.name_suffix}" : ""
     external_endpoint_group = lookup(provider, "external_endpoint_group", null) != null ? "${provider.external_endpoint_group}${local.defaults.apic.tenants.l3outs.external_endpoint_groups.name_suffix}" : ""
   }]
 

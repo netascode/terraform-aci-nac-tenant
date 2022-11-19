@@ -949,7 +949,7 @@ module "aci_external_endpoint_group" {
 
 module "aci_filter" {
   source  = "netascode/filter/aci"
-  version = "0.2.0"
+  version = "0.2.1"
 
   for_each    = { for filter in lookup(local.tenant, "filters", []) : filter.name => filter if lookup(local.modules, "aci_filter", true) }
   tenant      = local.tenant.name

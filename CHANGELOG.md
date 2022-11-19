@@ -5,6 +5,7 @@
 - Add `managed` flag to application profile
 - Remove option to specify tenant for EPG selectors under an ESG
 - Normalize filter `protocol` and `port` values
+- Allow escaping character in ESG tag selectors
 
 ## 0.3.2
 

@@ -29,6 +29,7 @@ locals {
         flood_in_encap              = lookup(epg, "flood_in_encap", local.defaults.apic.tenants.application_profiles.endpoint_groups.flood_in_encap)
         intra_epg_isolation         = lookup(epg, "intra_epg_isolation", local.defaults.apic.tenants.application_profiles.endpoint_groups.intra_epg_isolation)
         preferred_group             = lookup(epg, "preferred_group", local.defaults.apic.tenants.application_profiles.endpoint_groups.preferred_group)
+        qos_class                   = lookup(epg, "qos_class", local.defaults.apic.tenants.application_profiles.endpoint_groups.qos_class)
         custom_qos_policy           = lookup(epg, "custom_qos_policy", null) != null ? "${epg.custom_qos_policy}${local.defaults.apic.tenants.policies.custom_qos.name_suffix}" : ""
         bridge_domain               = lookup(epg, "bridge_domain", null) != null ? "${epg.bridge_domain}${local.defaults.apic.tenants.bridge_domains.name_suffix}" : ""
         contract_consumers          = lookup(lookup(epg, "contracts", {}), "consumers", null) != null ? [for contract in epg.contracts.consumers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
@@ -639,6 +640,7 @@ module "aci_endpoint_group" {
   flood_in_encap              = each.value.flood_in_encap
   intra_epg_isolation         = each.value.intra_epg_isolation
   preferred_group             = each.value.preferred_group
+  qos_class                   = each.value.qos_class
   custom_qos_policy           = each.value.custom_qos_policy
   bridge_domain               = each.value.bridge_domain
   contract_consumers          = each.value.contract_consumers

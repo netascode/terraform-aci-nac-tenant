@@ -6,6 +6,7 @@
 - Remove option to specify tenant for EPG selectors under an ESG
 - Normalize filter `protocol` and `port` values
 - Allow escaping character in ESG tag selectors
+- Add `qos_class` attribute to EPG
 
 ## 0.3.2
 

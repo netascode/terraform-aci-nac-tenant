@@ -629,7 +629,7 @@ module "aci_application_profile" {
 
 module "aci_endpoint_group" {
   source  = "netascode/endpoint-group/aci"
-  version = "0.2.2"
+  version = "0.2.3"
 
   for_each                    = { for epg in local.endpoint_groups : epg.key => epg.value if lookup(local.modules, "aci_endpoint_group", true) }
   tenant                      = local.tenant.name

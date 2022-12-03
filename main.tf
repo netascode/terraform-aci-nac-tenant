@@ -138,7 +138,7 @@ locals {
       ),
     ])
     ospf                                    = lookup(l3out, "ospf", null) != null ? true : false
-    ospf_area                               = try(tonumber(lookup(lookup(l3out, "ospf", {}), "area", "backbone")), false) != false ? "0.0.0.${tonumber(lookup(lookup(l3out, "ospf", {}), "area", "backbone"))}" : "backbone"
+    ospf_area                               = can(tonumber(lookup(lookup(l3out, "ospf", {}), "area", "backbone"))) ? (tonumber(lookup(lookup(l3out, "ospf", {}), "area", "backbone")) == 0 ? "backbone" : "0.0.0.${tonumber(lookup(lookup(l3out, "ospf", {}), "area", "backbone"))}") : lookup(lookup(l3out, "ospf", {}), "area", "backbone")
     ospf_area_cost                          = lookup(lookup(l3out, "ospf", {}), "area_cost", local.defaults.apic.tenants.l3outs.ospf.area_cost)
     ospf_area_type                          = lookup(lookup(l3out, "ospf", {}), "area_type", local.defaults.apic.tenants.l3outs.ospf.area_type)
     l3_multicast_ipv4                       = lookup(l3out, "l3_multicast_ipv4", local.defaults.apic.tenants.l3outs.l3_multicast_ipv4)
@@ -754,7 +754,7 @@ module "aci_oob_external_management_instance" {
 
 module "aci_l3out" {
   source  = "netascode/l3out/aci"
-  version = "0.2.0"
+  version = "0.2.1"
 
   for_each                                = { for l3out in local.l3outs : l3out.name => l3out if lookup(local.modules, "aci_l3out", true) }
   tenant                                  = local.tenant.name

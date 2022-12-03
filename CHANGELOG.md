@@ -7,6 +7,7 @@
 - Normalize filter `protocol` and `port` values
 - Allow escaping character in ESG tag selectors
 - Add `qos_class` attribute to EPG
+- Allow OSPF area IDs in dotted decimal format
 
 ## 0.3.2
 

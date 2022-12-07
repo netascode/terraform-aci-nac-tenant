@@ -1262,11 +1262,11 @@ module "aci_set_rule" {
       description = lookup(comm, "description", "")
     }
   ]
-  set_as_path          = lookup(lookup(each.value, "set_as_path ", {}), "criteria", null) != null || lookup(lookup(each.value, "set_as_path ", {}), "count", null) != null || lookup(lookup(each.value, "set_as_path ", {}), "order", null) != null ? true : false
-  set_as_path_criteria = lookup(lookup(each.value, "set_as_path ", {}), "criteria", local.defaults.apic.tenants.policies.set_rules.set_as_path.criteria)
-  set_as_path_count    = lookup(lookup(each.value, "set_as_path ", {}), "count", local.defaults.apic.tenants.policies.set_rules.set_as_path.count)
-  set_as_path_order    = lookup(lookup(each.value, "set_as_path ", {}), "order", local.defaults.apic.tenants.policies.set_rules.set_as_path.order)
-  set_as_path_asn      = lookup(lookup(each.value, "set_as_path ", {}), "asn", null)
+  set_as_path          = lookup(lookup(each.value, "set_as_path", {}), "criteria", null) != null || lookup(lookup(each.value, "set_as_path", {}), "count", null) != null || lookup(lookup(each.value, "set_as_path", {}), "order", null) != null
+  set_as_path_criteria = lookup(lookup(each.value, "set_as_path", {}), "criteria", local.defaults.apic.tenants.policies.set_rules.set_as_path.criteria)
+  set_as_path_count    = lookup(lookup(each.value, "set_as_path", {}), "count", local.defaults.apic.tenants.policies.set_rules.set_as_path.count)
+  set_as_path_order    = lookup(lookup(each.value, "set_as_path", {}), "order", local.defaults.apic.tenants.policies.set_rules.set_as_path.order)
+  set_as_path_asn      = lookup(lookup(each.value, "set_as_path", {}), "asn", null)
   next_hop_propagation = lookup(each.value, "next_hop_propagation", local.defaults.apic.tenants.policies.set_rules.next_hop_propagation)
   multipath            = lookup(each.value, "multipath", local.defaults.apic.tenants.policies.set_rules.multipath)
 

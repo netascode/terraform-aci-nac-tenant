@@ -1246,11 +1246,11 @@ module "aci_set_rule" {
   community                   = lookup(each.value, "community", "")
   community_mode              = lookup(each.value, "community_mode", local.defaults.apic.tenants.policies.set_rules.community_mode)
   tag                         = lookup(each.value, "tag", null)
-  dampening                   = lookup(lookup(each.value, "dampening ", {}), "half_life", null) != null || lookup(lookup(each.value, "dampening ", {}), "max_suppress_time", null) != null || lookup(lookup(each.value, "dampening ", {}), "reuse_limit", null) != null || lookup(lookup(each.value, "dampening ", {}), "suppress_limit", null) != null ? true : false
-  dampening_half_life         = lookup(lookup(each.value, "dampening ", {}), "half_life", local.defaults.apic.tenants.policies.set_rules.dampening.half_life)
-  dampening_max_suppress_time = lookup(lookup(each.value, "dampening ", {}), "max_suppress_time", local.defaults.apic.tenants.policies.set_rules.dampening.max_suppress_time)
-  dampening_reuse_limit       = lookup(lookup(each.value, "dampening ", {}), "reuse_limit", local.defaults.apic.tenants.policies.set_rules.dampening.reuse_limit)
-  dampening_suppress_limit    = lookup(lookup(each.value, "dampening ", {}), "suppress_limit", local.defaults.apic.tenants.policies.set_rules.dampening.suppress_limit)
+  dampening                   = lookup(lookup(each.value, "dampening", {}), "half_life", null) != null || lookup(lookup(each.value, "dampening", {}), "max_suppress_time", null) != null || lookup(lookup(each.value, "dampening", {}), "reuse_limit", null) != null || lookup(lookup(each.value, "dampening", {}), "suppress_limit", null) != null
+  dampening_half_life         = lookup(lookup(each.value, "dampening", {}), "half_life", local.defaults.apic.tenants.policies.set_rules.dampening.half_life)
+  dampening_max_suppress_time = lookup(lookup(each.value, "dampening", {}), "max_suppress_time", local.defaults.apic.tenants.policies.set_rules.dampening.max_suppress_time)
+  dampening_reuse_limit       = lookup(lookup(each.value, "dampening", {}), "reuse_limit", local.defaults.apic.tenants.policies.set_rules.dampening.reuse_limit)
+  dampening_suppress_limit    = lookup(lookup(each.value, "dampening", {}), "suppress_limit", local.defaults.apic.tenants.policies.set_rules.dampening.suppress_limit)
   weight                      = lookup(each.value, "weight", null)
   next_hop                    = lookup(each.value, "next_hop", "")
   metric                      = lookup(each.value, "metric", null)

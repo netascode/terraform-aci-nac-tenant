@@ -1,3 +1,7 @@
+## 0.3.4 (unreleased)
+
+- Fix VRF leaked internal prefix destination public default value
+
 ## 0.3.3
 
 - Add QoS attributes to contract

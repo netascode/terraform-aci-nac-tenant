@@ -542,7 +542,7 @@ module "aci_vrf" {
       description = lookup(dest, "description", "")
       tenant      = dest.tenant
       vrf         = dest.vrf
-      public      = lookup(dest, "public", "inherit")
+      public      = lookup(dest, "public", null)
     }]
   }]
   leaked_external_prefixes = [for prefix in lookup(each.value, "leaked_external_prefixes", []) : {

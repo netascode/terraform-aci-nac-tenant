@@ -1332,7 +1332,7 @@ module "aci_bgp_peer_prefix_policy" {
   source  = "netascode/bgp-peer-prefix-policy/aci"
   version = "0.1.0"
 
-  for_each     = { for pol in try(local.tenant.policies.bgp_peer_prefix_policies, []) : pol.name => pol if try(local.modules.aci_bfd_interface_policy, true) }
+  for_each     = { for pol in try(local.tenant.policies.bgp_peer_prefix_policies, []) : pol.name => pol if try(local.modules.aci_bgp_peer_prefix_policy, true) }
   tenant       = local.tenant.name
   name         = "${each.value.name}${local.defaults.apic.tenants.policies.bgp_peer_prefix_policies.name_suffix}"
   description  = try(each.value.description, "")
@@ -1340,6 +1340,21 @@ module "aci_bgp_peer_prefix_policy" {
   max_prefixes = try(each.value.max_prefixes, local.defaults.apic.tenants.policies.bgp_peer_prefix_policies.max_prefixes)
   restart_time = try(each.value.restart_time, local.defaults.apic.tenants.policies.bgp_peer_prefix_policies.restart_time)
   threshold    = try(each.value.action, local.defaults.apic.tenants.policies.bgp_peer_prefix_policies.threshold)
+
+  depends_on = [
+    module.aci_tenant,
+  ]
+}
+
+module "aci_bgp_best_path_policy" {
+  source  = "netascode/bgp-best-path-policy/aci"
+  version = "0.1.0"
+
+  for_each     = { for pol in try(local.tenant.policies.bgp_best_path_policies, []) : pol.name => pol if try(local.modules.aci_bgp_best_path_policy, true) }
+  tenant       = local.tenant.name
+  name         = "${each.value.name}${local.defaults.apic.tenants.policies.bgp_best_path_policies.name_suffix}"
+  description  = try(each.value.description, "")
+  control_type = try(each.value.control_type, local.defaults.apic.tenants.policies.bgp_best_path_policies.control_type)
 
   depends_on = [
     module.aci_tenant,

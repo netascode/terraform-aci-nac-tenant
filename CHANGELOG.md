@@ -2,6 +2,7 @@
 
 - Fix VRF leaked internal prefix destination public default value
 - Add BGP peer prefix policy
+- Add BGP best path policy
 
 ## 0.3.3
 

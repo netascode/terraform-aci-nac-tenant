@@ -1377,7 +1377,7 @@ module "aci_bgp_peer_prefix_policy" {
   action       = try(each.value.action, local.defaults.apic.tenants.policies.bgp_peer_prefix_policies.action)
   max_prefixes = try(each.value.max_prefixes, local.defaults.apic.tenants.policies.bgp_peer_prefix_policies.max_prefixes)
   restart_time = try(each.value.restart_time, local.defaults.apic.tenants.policies.bgp_peer_prefix_policies.restart_time)
-  threshold    = try(each.value.action, local.defaults.apic.tenants.policies.bgp_peer_prefix_policies.threshold)
+  threshold    = try(each.value.threshold, local.defaults.apic.tenants.policies.bgp_peer_prefix_policies.threshold)
 
   depends_on = [
     module.aci_tenant,
@@ -1422,9 +1422,9 @@ module "aci_igmp_interface_policy" {
   version_                          = try(each.value.version, local.defaults.apic.tenants.policies.igmp_interface_policies.version)
   max_mcast_entries                 = try(each.value.max_mcast_entries, local.defaults.apic.tenants.policies.igmp_interface_policies.max_mcast_entries)
   reserved_mcast_entries            = try(each.value.reserved_mcast_entries, local.defaults.apic.tenants.policies.igmp_interface_policies.reserved_mcast_entries)
-  report_policy_multicast_route_map = "${each.value.report_policy_multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}"
-  static_report_multicast_route_map = "${each.value.static_report_multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}"
-  state_limit_multicast_route_map   = "${each.value.state_limit_multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}"
+  report_policy_multicast_route_map = try(each.value.report_policy_multicast_route_map, null) != null ? "${each.value.report_policy_multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}" : ""
+  static_report_multicast_route_map = try(each.value.static_report_multicast_route_map, null) != null ? "${each.value.static_report_multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}" : ""
+  state_limit_multicast_route_map   = try(each.value.state_limit_multicast_route_map, null) != null ? "${each.value.state_limit_multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}" : ""
 
   depends_on = [
     module.aci_tenant,

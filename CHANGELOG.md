@@ -1,6 +1,7 @@
 ## 0.3.4 (unreleased)
 
 - Fix VRF leaked internal prefix destination public default value
+- Add BGP peer prefix policy
 
 ## 0.3.3
 

@@ -1328,6 +1328,24 @@ module "aci_qos_policy" {
   ]
 }
 
+module "aci_bgp_peer_prefix_policy" {
+  source  = "netascode/bgp-peer-prefix-policy/aci"
+  version = "0.1.0"
+
+  for_each     = { for pol in try(local.tenant.policies.bgp_peer_prefix_policies, []) : pol.name => pol if try(local.modules.aci_bfd_interface_policy, true) }
+  tenant       = local.tenant.name
+  name         = "${each.value.name}${local.defaults.apic.tenants.policies.bgp_peer_prefix_policies.name_suffix}"
+  description  = try(each.value.description, "")
+  action       = try(each.value.action, local.defaults.apic.tenants.policies.bgp_peer_prefix_policies.action)
+  max_prefixes = try(each.value.max_prefixes, local.defaults.apic.tenants.policies.bgp_peer_prefix_policies.max_prefixes)
+  restart_time = try(each.value.restart_time, local.defaults.apic.tenants.policies.bgp_peer_prefix_policies.restart_time)
+  threshold    = try(each.value.action, local.defaults.apic.tenants.policies.bgp_peer_prefix_policies.threshold)
+
+  depends_on = [
+    module.aci_tenant,
+  ]
+}
+
 module "aci_l4l7_device" {
   source  = "netascode/l4l7-device/aci"
   version = "0.2.3"

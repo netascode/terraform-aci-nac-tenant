@@ -517,7 +517,7 @@ module "aci_tenant" {
 
 module "aci_vrf" {
   source  = "netascode/vrf/aci"
-  version = "0.2.1"
+  version = "0.2.2"
 
   for_each                                = { for vrf in lookup(local.tenant, "vrfs", []) : vrf.name => vrf if lookup(local.modules, "aci_vrf", true) }
   tenant                                  = local.tenant.name

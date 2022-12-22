@@ -517,24 +517,60 @@ module "aci_tenant" {
 
 module "aci_vrf" {
   source  = "netascode/vrf/aci"
-  version = "0.1.6"
+  version = "0.2.2"
 
-  for_each                               = { for vrf in lookup(local.tenant, "vrfs", []) : vrf.name => vrf if lookup(local.modules, "aci_vrf", true) }
-  tenant                                 = local.tenant.name
-  name                                   = "${each.value.name}${local.defaults.apic.tenants.vrfs.name_suffix}"
-  alias                                  = lookup(each.value, "alias", "")
-  description                            = lookup(each.value, "description", "")
-  enforcement_direction                  = lookup(each.value, "enforcement_direction", local.defaults.apic.tenants.vrfs.enforcement_direction)
-  enforcement_preference                 = lookup(each.value, "enforcement_preference", local.defaults.apic.tenants.vrfs.enforcement_preference)
-  data_plane_learning                    = lookup(each.value, "data_plane_learning", local.defaults.apic.tenants.vrfs.data_plane_learning)
-  contract_consumers                     = lookup(lookup(each.value, "contracts", {}), "consumers", null) != null ? [for contract in each.value.contracts.consumers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
-  contract_providers                     = lookup(lookup(each.value, "contracts", {}), "providers", null) != null ? [for contract in each.value.contracts.providers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
-  contract_imported_consumers            = lookup(lookup(each.value, "contracts", {}), "imported_consumers", null) != null ? [for contract in each.value.contracts.imported_consumers : "${contract}${local.defaults.apic.tenants.imported_contracts.name_suffix}"] : []
-  preferred_group                        = lookup(each.value, "preferred_group", local.defaults.apic.tenants.vrfs.preferred_group)
-  bgp_timer_policy                       = lookup(lookup(each.value, "bgp", {}), "timer_policy", null) != null ? "${each.value.bgp.timer_policy}${local.defaults.apic.tenants.policies.bgp_timer_policies.name_suffix}" : ""
-  bgp_ipv4_address_family_context_policy = lookup(lookup(each.value, "bgp", {}), "ipv4_address_family_context_policy", null) != null ? "${each.value.bgp.ipv4_address_family_context_policy}${local.defaults.apic.tenants.policies.bgp_address_family_context_policies.name_suffix}" : ""
-  bgp_ipv6_address_family_context_policy = lookup(lookup(each.value, "bgp", {}), "ipv6_address_family_context_policy", null) != null ? "${each.value.bgp.ipv6_address_family_context_policy}${local.defaults.apic.tenants.policies.bgp_address_family_context_policies.name_suffix}" : ""
-  dns_labels                             = lookup(each.value, "dns_labels", [])
+  for_each                                = { for vrf in lookup(local.tenant, "vrfs", []) : vrf.name => vrf if lookup(local.modules, "aci_vrf", true) }
+  tenant                                  = local.tenant.name
+  name                                    = "${each.value.name}${local.defaults.apic.tenants.vrfs.name_suffix}"
+  alias                                   = lookup(each.value, "alias", "")
+  description                             = lookup(each.value, "description", "")
+  enforcement_direction                   = lookup(each.value, "enforcement_direction", local.defaults.apic.tenants.vrfs.enforcement_direction)
+  enforcement_preference                  = lookup(each.value, "enforcement_preference", local.defaults.apic.tenants.vrfs.enforcement_preference)
+  data_plane_learning                     = lookup(each.value, "data_plane_learning", local.defaults.apic.tenants.vrfs.data_plane_learning)
+  contract_consumers                      = lookup(lookup(each.value, "contracts", {}), "consumers", null) != null ? [for contract in each.value.contracts.consumers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
+  contract_providers                      = lookup(lookup(each.value, "contracts", {}), "providers", null) != null ? [for contract in each.value.contracts.providers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
+  contract_imported_consumers             = lookup(lookup(each.value, "contracts", {}), "imported_consumers", null) != null ? [for contract in each.value.contracts.imported_consumers : "${contract}${local.defaults.apic.tenants.imported_contracts.name_suffix}"] : []
+  preferred_group                         = lookup(each.value, "preferred_group", local.defaults.apic.tenants.vrfs.preferred_group)
+  bgp_timer_policy                        = lookup(lookup(each.value, "bgp", {}), "timer_policy", null) != null ? "${each.value.bgp.timer_policy}${local.defaults.apic.tenants.policies.bgp_timer_policies.name_suffix}" : ""
+  bgp_ipv4_address_family_context_policy  = lookup(lookup(each.value, "bgp", {}), "ipv4_address_family_context_policy", null) != null ? "${each.value.bgp.ipv4_address_family_context_policy}${local.defaults.apic.tenants.policies.bgp_address_family_context_policies.name_suffix}" : ""
+  bgp_ipv6_address_family_context_policy  = lookup(lookup(each.value, "bgp", {}), "ipv6_address_family_context_policy", null) != null ? "${each.value.bgp.ipv6_address_family_context_policy}${local.defaults.apic.tenants.policies.bgp_address_family_context_policies.name_suffix}" : ""
+  dns_labels                              = lookup(each.value, "dns_labels", [])
+  pim_enabled                             = try(each.value.pim, null) != null ? true : false
+  pim_mtu                                 = try(each.value.pim.mtu, local.defaults.apic.tenants.vrfs.pim.mtu)
+  pim_fast_convergence                    = try(each.value.pim.fast_convergence, local.defaults.apic.tenants.vrfs.pim.fast_convergence)
+  pim_strict_rfc                          = try(each.value.pim.strict_rfc, local.defaults.apic.tenants.vrfs.pim.strict_rfc)
+  pim_max_multicast_entries               = try(each.value.pim.max_multicast_entries, local.defaults.apic.tenants.vrfs.pim.max_multicast_entries)
+  pim_reserved_multicast_entries          = try(each.value.pim.reserved_multicast_entries, local.defaults.apic.tenants.vrfs.pim.reserved_multicast_entries)
+  pim_resource_policy_multicast_route_map = try(rp.pim.resource_policy_multicast_route_map, null) != null ? "${rp.pim.resource_policy_multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}" : ""
+  pim_static_rps = [for rp in try(each.value.pim.static_rps, []) : {
+    ip                  = rp.ip
+    multicast_route_map = try(rp.multicast_route_map, null) != null ? "${rp.multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}" : ""
+  }]
+  pim_fabric_rps = [for rp in try(each.value.pim.fabric_rps, []) : {
+    ip                  = rp.ip
+    multicast_route_map = try(rp.multicast_route_map, null) != null ? "${rp.multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}" : ""
+  }]
+  pim_bsr_listen_updates                   = try(each.value.pim.bsr_listen_updates, local.defaults.apic.tenants.vrfs.pim.bsr_listen_updates)
+  pim_bsr_forward_updates                  = try(each.value.pim.bsr_forward_updates, local.defaults.apic.tenants.vrfs.pim.bsr_forward_updates)
+  pim_bsr_filter_multicast_route_map       = try(rp.pim.bsr_filter_multicast_route_map, null) != null ? "${rp.pim.bsr_filter_multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}" : ""
+  pim_auto_rp_listen_updates               = try(each.value.pim.auto_rp_listen_updates, local.defaults.apic.tenants.vrfs.pim.auto_rp_listen_updates)
+  pim_auto_rp_forward_updates              = try(each.value.pim.auto_rp_forward_updates, local.defaults.apic.tenants.vrfs.pim.auto_rp_forward_updates)
+  pim_auto_rp_filter_multicast_route_map   = try(rp.pim.auto_rp_filter_multicast_route_map, null) != null ? "${rp.pim.auto_rp_filter_multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}" : ""
+  pim_asm_shared_range_multicast_route_map = try(rp.pim.asm_shared_range_multicast_route_map, null) != null ? "${rp.pim.asm_shared_range_multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}" : ""
+  pim_asm_sg_expiry                        = try(each.value.pim.asm_sg_expiry, local.defaults.apic.tenants.vrfs.pim.asm_sg_expiry)
+  pim_asm_sg_expiry_multicast_route_map    = try(rp.pim.asm_sg_expiry_multicast_route_map, null) != null ? "${rp.pim.asm_sg_expiry_multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}" : ""
+  pim_asm_traffic_registry_max_rate        = try(each.value.pim.asm_traffic_registry_max_rate, local.defaults.apic.tenants.vrfs.pim.asm_traffic_registry_max_rate)
+  pim_asm_traffic_registry_source_ip       = try(each.value.pim.asm_traffic_registry_source_ip, local.defaults.apic.tenants.vrfs.pim.asm_traffic_registry_source_ip)
+  pim_ssm_group_range_multicast_route_map  = try(rp.pim.ssm_group_range_multicast_route_map, null) != null ? "${rp.pim.ssm_group_range_multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}" : ""
+  pim_inter_vrf_policies = [for pol in try(each.value.pim.inter_vrf_policies, []) : {
+    tenant              = pol.tenant
+    vrf                 = "${pol.vrf}${local.defaults.apic.tenants.vrfs.name_suffix}"
+    multicast_route_map = try(pol.multicast_route_map, null) != null ? "${pol.multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}" : ""
+  }]
+  pim_igmp_ssm_translate_policies = [for pol in try(each.value.pim.igmp_context_ssm_translate_policies, []) : {
+    group_prefix   = pol.group_prefix
+    source_address = pol.source_address
+  }]
   leaked_internal_prefixes = [for prefix in lookup(each.value, "leaked_internal_prefixes", []) : {
     prefix = prefix.prefix
     public = lookup(prefix, "public", local.defaults.apic.tenants.vrfs.leaked_internal_prefixes.public)

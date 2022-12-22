@@ -6,6 +6,7 @@
 - Add IGMP interface policy
 - Add IGMP snooping policy
 - Add `virtual_mac` and `ep_move_detection` attributes to bridge domain
+- Add `pim` attributes to VRF
 
 ## 0.3.3
 

@@ -1361,6 +1361,38 @@ module "aci_bgp_best_path_policy" {
   ]
 }
 
+module "aci_igmp_interface_policy" {
+  source  = "netascode/igmp-interface-policy/aci"
+  version = "0.1.0"
+
+  for_each                          = { for pol in try(local.tenant.policies.igmp_interface_policies, []) : pol.name => pol if try(local.modules.aci_igmp_interface_policy, true) }
+  tenant                            = local.tenant.name
+  name                              = "${each.value.name}${local.defaults.apic.tenants.policies.igmp_interface_policies.name_suffix}"
+  description                       = try(each.value.description, "")
+  grp_timeout                       = try(each.value.grp_timeout, local.defaults.apic.tenants.policies.igmp_interface_policies.grp_timeout)
+  allow_v3_asm                      = try(each.value.allow_v3_asm, local.defaults.apic.tenants.policies.igmp_interface_policies.allow_v3_asm)
+  fast_leave                        = try(each.value.fast_leave, local.defaults.apic.tenants.policies.igmp_interface_policies.fast_leave)
+  report_link_local_groups          = try(each.value.report_link_local_groups, local.defaults.apic.tenants.policies.igmp_interface_policies.report_link_local_groups)
+  last_member_count                 = try(each.value.last_member_count, local.defaults.apic.tenants.policies.igmp_interface_policies.last_member_count)
+  last_member_response_time         = try(each.value.last_member_response_time, local.defaults.apic.tenants.policies.igmp_interface_policies.last_member_response_time)
+  querier_timeout                   = try(each.value.querier_timeout, local.defaults.apic.tenants.policies.igmp_interface_policies.querier_timeout)
+  query_interval                    = try(each.value.query_interval, local.defaults.apic.tenants.policies.igmp_interface_policies.query_interval)
+  robustness_variable               = try(each.value.robustness_variable, local.defaults.apic.tenants.policies.igmp_interface_policies.robustness_variable)
+  query_response_interval           = try(each.value.query_response_interval, local.defaults.apic.tenants.policies.igmp_interface_policies.query_response_interval)
+  startup_query_count               = try(each.value.startup_query_count, local.defaults.apic.tenants.policies.igmp_interface_policies.startup_query_count)
+  startup_query_interval            = try(each.value.startup_query_interval, local.defaults.apic.tenants.policies.igmp_interface_policies.startup_query_interval)
+  version_                          = try(each.value.version, local.defaults.apic.tenants.policies.igmp_interface_policies.version)
+  max_mcast_entries                 = try(each.value.max_mcast_entries, local.defaults.apic.tenants.policies.igmp_interface_policies.max_mcast_entries)
+  reserved_mcast_entries            = try(each.value.reserved_mcast_entries, local.defaults.apic.tenants.policies.igmp_interface_policies.reserved_mcast_entries)
+  report_policy_multicast_route_map = "${each.value.report_policy_multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}"
+  static_report_multicast_route_map = "${each.value.static_report_multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}"
+  state_limit_multicast_route_map   = "${each.value.state_limit_multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}"
+
+  depends_on = [
+    module.aci_tenant,
+  ]
+}
+
 module "aci_l4l7_device" {
   source  = "netascode/l4l7-device/aci"
   version = "0.2.3"

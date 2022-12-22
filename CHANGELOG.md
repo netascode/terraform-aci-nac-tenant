@@ -4,6 +4,7 @@
 - Add BGP peer prefix policy
 - Add BGP best path policy
 - Add IGMP interface policy
+- Add IGMP snooping policy
 
 ## 0.3.3
 

@@ -1393,6 +1393,28 @@ module "aci_igmp_interface_policy" {
   ]
 }
 
+module "aci_igmp_snooping_policy" {
+  source  = "netascode/igmp-snooping-policy/aci"
+  version = "0.1.0"
+
+  for_each                   = { for pol in try(local.tenant.policies.igmp_snooping_policies, []) : pol.name => pol if try(local.modules.aci_igmp_snooping_policy, true) }
+  tenant                     = local.tenant.name
+  name                       = "${each.value.name}${local.defaults.apic.tenants.policies.igmp_snooping_policies.name_suffix}"
+  description                = try(each.value.description, "")
+  admin_state                = try(each.value.admin_state, local.defaults.apic.tenants.policies.igmp_snooping_policies.admin_state)
+  fast_leave                 = try(each.value.fast_leave, local.defaults.apic.tenants.policies.igmp_snooping_policies.fast_leave)
+  querier                    = try(each.value.querier, local.defaults.apic.tenants.policies.igmp_snooping_policies.querier)
+  last_member_query_interval = try(each.value.last_member_query_interval, local.defaults.apic.tenants.policies.igmp_snooping_policies.last_member_query_interval)
+  query_interval             = try(each.value.query_interval, local.defaults.apic.tenants.policies.igmp_snooping_policies.query_interval)
+  query_response_interval    = try(each.value.query_response_interval, local.defaults.apic.tenants.policies.igmp_snooping_policies.query_response_interval)
+  start_query_count          = try(each.value.start_query_count, local.defaults.apic.tenants.policies.igmp_snooping_policies.start_query_count)
+  start_query_interval       = try(each.value.start_query_interval, local.defaults.apic.tenants.policies.igmp_snooping_policies.start_query_interval)
+
+  depends_on = [
+    module.aci_tenant,
+  ]
+}
+
 module "aci_l4l7_device" {
   source  = "netascode/l4l7-device/aci"
   version = "0.2.3"

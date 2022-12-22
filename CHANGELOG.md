@@ -5,6 +5,7 @@
 - Add BGP best path policy
 - Add IGMP interface policy
 - Add IGMP snooping policy
+- Add `virtual_mac` and `ep_move_detection` attributes to bridge domain
 
 ## 0.3.3
 

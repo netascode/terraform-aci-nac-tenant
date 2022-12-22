@@ -566,7 +566,7 @@ module "aci_vrf" {
 
 module "aci_bridge_domain" {
   source  = "netascode/bridge-domain/aci"
-  version = "0.2.1"
+  version = "0.2.2"
 
   for_each                   = { for bd in lookup(local.tenant, "bridge_domains", []) : bd.name => bd if lookup(local.modules, "aci_bridge_domain", true) }
   tenant                     = local.tenant.name
@@ -578,6 +578,8 @@ module "aci_bridge_domain" {
   ip_dataplane_learning      = lookup(each.value, "ip_dataplane_learning", local.defaults.apic.tenants.bridge_domains.ip_dataplane_learning)
   limit_ip_learn_to_subnets  = lookup(each.value, "limit_ip_learn_to_subnets", local.defaults.apic.tenants.bridge_domains.limit_ip_learn_to_subnets)
   mac                        = lookup(each.value, "mac", local.defaults.apic.tenants.bridge_domains.mac)
+  virtual_mac                = try(each.value.virtual_mac, "")
+  ep_move_detection          = try(each.value.ep_move_detection, local.defaults.apic.tenants.bridge_domains.ep_move_detection)
   l3_multicast               = lookup(each.value, "l3_multicast", local.defaults.apic.tenants.bridge_domains.l3_multicast)
   multi_destination_flooding = lookup(each.value, "multi_destination_flooding", local.defaults.apic.tenants.bridge_domains.multi_destination_flooding)
   unicast_routing            = lookup(each.value, "unicast_routing", local.defaults.apic.tenants.bridge_domains.unicast_routing)

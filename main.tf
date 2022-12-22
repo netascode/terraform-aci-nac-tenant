@@ -541,7 +541,7 @@ module "aci_vrf" {
   pim_strict_rfc                          = try(each.value.pim.strict_rfc, local.defaults.apic.tenants.vrfs.pim.strict_rfc)
   pim_max_multicast_entries               = try(each.value.pim.max_multicast_entries, local.defaults.apic.tenants.vrfs.pim.max_multicast_entries)
   pim_reserved_multicast_entries          = try(each.value.pim.reserved_multicast_entries, local.defaults.apic.tenants.vrfs.pim.reserved_multicast_entries)
-  pim_resource_policy_multicast_route_map = try(rp.pim.resource_policy_multicast_route_map, null) != null ? "${rp.pim.resource_policy_multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}" : ""
+  pim_resource_policy_multicast_route_map = try(each.value.pim.resource_policy_multicast_route_map, null) != null ? "${each.value.pim.resource_policy_multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}" : ""
   pim_static_rps = [for rp in try(each.value.pim.static_rps, []) : {
     ip                  = rp.ip
     multicast_route_map = try(rp.multicast_route_map, null) != null ? "${rp.multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}" : ""
@@ -552,16 +552,16 @@ module "aci_vrf" {
   }]
   pim_bsr_listen_updates                   = try(each.value.pim.bsr_listen_updates, local.defaults.apic.tenants.vrfs.pim.bsr_listen_updates)
   pim_bsr_forward_updates                  = try(each.value.pim.bsr_forward_updates, local.defaults.apic.tenants.vrfs.pim.bsr_forward_updates)
-  pim_bsr_filter_multicast_route_map       = try(rp.pim.bsr_filter_multicast_route_map, null) != null ? "${rp.pim.bsr_filter_multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}" : ""
+  pim_bsr_filter_multicast_route_map       = try(each.value.pim.bsr_filter_multicast_route_map, null) != null ? "${each.value.pim.bsr_filter_multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}" : ""
   pim_auto_rp_listen_updates               = try(each.value.pim.auto_rp_listen_updates, local.defaults.apic.tenants.vrfs.pim.auto_rp_listen_updates)
   pim_auto_rp_forward_updates              = try(each.value.pim.auto_rp_forward_updates, local.defaults.apic.tenants.vrfs.pim.auto_rp_forward_updates)
-  pim_auto_rp_filter_multicast_route_map   = try(rp.pim.auto_rp_filter_multicast_route_map, null) != null ? "${rp.pim.auto_rp_filter_multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}" : ""
-  pim_asm_shared_range_multicast_route_map = try(rp.pim.asm_shared_range_multicast_route_map, null) != null ? "${rp.pim.asm_shared_range_multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}" : ""
+  pim_auto_rp_filter_multicast_route_map   = try(each.value.pim.auto_rp_filter_multicast_route_map, null) != null ? "${each.value.pim.auto_rp_filter_multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}" : ""
+  pim_asm_shared_range_multicast_route_map = try(each.value.pim.asm_shared_range_multicast_route_map, null) != null ? "${each.value.pim.asm_shared_range_multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}" : ""
   pim_asm_sg_expiry                        = try(each.value.pim.asm_sg_expiry, local.defaults.apic.tenants.vrfs.pim.asm_sg_expiry)
-  pim_asm_sg_expiry_multicast_route_map    = try(rp.pim.asm_sg_expiry_multicast_route_map, null) != null ? "${rp.pim.asm_sg_expiry_multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}" : ""
+  pim_asm_sg_expiry_multicast_route_map    = try(each.value.pim.asm_sg_expiry_multicast_route_map, null) != null ? "${each.value.pim.asm_sg_expiry_multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}" : ""
   pim_asm_traffic_registry_max_rate        = try(each.value.pim.asm_traffic_registry_max_rate, local.defaults.apic.tenants.vrfs.pim.asm_traffic_registry_max_rate)
   pim_asm_traffic_registry_source_ip       = try(each.value.pim.asm_traffic_registry_source_ip, local.defaults.apic.tenants.vrfs.pim.asm_traffic_registry_source_ip)
-  pim_ssm_group_range_multicast_route_map  = try(rp.pim.ssm_group_range_multicast_route_map, null) != null ? "${rp.pim.ssm_group_range_multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}" : ""
+  pim_ssm_group_range_multicast_route_map  = try(each.value.pim.ssm_group_range_multicast_route_map, null) != null ? "${each.value.pim.ssm_group_range_multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}" : ""
   pim_inter_vrf_policies = [for pol in try(each.value.pim.inter_vrf_policies, []) : {
     tenant              = pol.tenant
     vrf                 = "${pol.vrf}${local.defaults.apic.tenants.vrfs.name_suffix}"

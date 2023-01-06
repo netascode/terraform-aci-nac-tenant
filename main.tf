@@ -1460,7 +1460,6 @@ module "aci_pim_policy" {
   for_each                     = { for pol in try(local.tenant.policies.pim_policies, []) : pol.name => pol if try(local.modules.aci_pim_policy, true) }
   tenant                       = local.tenant.name
   name                         = "${each.value.name}${local.defaults.apic.tenants.policies.pim_policies.name_suffix}"
-  description                  = try(each.value.description, "")
   auth_key                     = try(each.value.auth_key, null)
   auth_type                    = try(each.value.auth_type, local.defaults.apic.tenants.policies.pim_policies.auth_type)
   mcast_dom_boundary           = try(each.value.mcast_dom_boundary, local.defaults.apic.tenants.policies.pim_policies.mcast_dom_boundary)

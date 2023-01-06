@@ -1453,6 +1453,32 @@ module "aci_igmp_snooping_policy" {
   ]
 }
 
+module "aci_pim_policy" {
+  source  = "netascode/pim-policy/aci"
+  version = "0.1.0"
+
+  for_each                     = { for pol in try(local.tenant.policies.pim_policies, []) : pol.name => pol if try(local.modules.aci_pim_policy, true) }
+  tenant                       = local.tenant.name
+  name                         = "${each.value.name}${local.defaults.apic.tenants.policies.pim_policies.name_suffix}"
+  description                  = try(each.value.description, "")
+  auth_key                     = try(each.value.auth_key, null)
+  auth_type                    = try(each.value.auth_type, local.defaults.apic.tenants.policies.pim_policies.auth_type)
+  mcast_dom_boundary           = try(each.value.mcast_dom_boundary, local.defaults.apic.tenants.policies.pim_policies.mcast_dom_boundary)
+  passive                      = try(each.value.passive, local.defaults.apic.tenants.policies.pim_policies.passive)
+  strict_rfc                   = try(each.value.strict_rfc, local.defaults.apic.tenants.policies.pim_policies.strict_rfc)
+  designated_router_delay      = try(each.value.designated_router_delay, local.defaults.apic.tenants.policies.pim_policies.designated_router_delay)
+  designated_router_priority   = try(each.value.designated_router_priority, local.defaults.apic.tenants.policies.pim_policies.designated_router_priority)
+  hello_interval               = try(each.value.hello_interval, local.defaults.apic.tenants.policies.pim_policies.hello_interval)
+  join_prune_interval          = try(each.value.join_prune_interval, local.defaults.apic.tenants.policies.pim_policies.join_prune_interval)
+  neighbor_filter_policy       = try("${each.value.neighbor_filter_policy}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}", null)
+  join_prune_filter_policy_in  = try("${each.value.join_prune_filter_policy_in}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}", null)
+  join_prune_filter_policy_out = try("${each.value.join_prune_filter_policy_out}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}", null)
+
+  depends_on = [
+    module.aci_tenant,
+  ]
+}
+
 module "aci_l4l7_device" {
   source  = "netascode/l4l7-device/aci"
   version = "0.2.3"

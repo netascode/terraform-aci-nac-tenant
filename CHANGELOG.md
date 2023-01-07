@@ -8,6 +8,7 @@
 - Add `virtual_mac` and `ep_move_detection` attributes to bridge domain
 - Add `pim` attributes to VRF
 - Add PIM policy
+- Add VRF BGP IPv4/IPv6 import/export route targets
 
 ## 0.3.3
 

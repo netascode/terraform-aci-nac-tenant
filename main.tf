@@ -517,7 +517,7 @@ module "aci_tenant" {
 
 module "aci_vrf" {
   source  = "netascode/vrf/aci"
-  version = "0.2.2"
+  version = "0.2.3"
 
   for_each                                = { for vrf in lookup(local.tenant, "vrfs", []) : vrf.name => vrf if lookup(local.modules, "aci_vrf", true) }
   tenant                                  = local.tenant.name
@@ -534,6 +534,10 @@ module "aci_vrf" {
   bgp_timer_policy                        = lookup(lookup(each.value, "bgp", {}), "timer_policy", null) != null ? "${each.value.bgp.timer_policy}${local.defaults.apic.tenants.policies.bgp_timer_policies.name_suffix}" : ""
   bgp_ipv4_address_family_context_policy  = lookup(lookup(each.value, "bgp", {}), "ipv4_address_family_context_policy", null) != null ? "${each.value.bgp.ipv4_address_family_context_policy}${local.defaults.apic.tenants.policies.bgp_address_family_context_policies.name_suffix}" : ""
   bgp_ipv6_address_family_context_policy  = lookup(lookup(each.value, "bgp", {}), "ipv6_address_family_context_policy", null) != null ? "${each.value.bgp.ipv6_address_family_context_policy}${local.defaults.apic.tenants.policies.bgp_address_family_context_policies.name_suffix}" : ""
+  bgp_ipv4_import_route_target            = try(each.value.bgp.ipv4_import_route_target, "")
+  bgp_ipv4_export_route_target            = try(each.value.bgp.ipv4_export_route_target, "")
+  bgp_ipv6_import_route_target            = try(each.value.bgp.ipv6_import_route_target, "")
+  bgp_ipv6_export_route_target            = try(each.value.bgp.ipv6_export_route_target, "")
   dns_labels                              = lookup(each.value, "dns_labels", [])
   pim_enabled                             = try(each.value.pim, null) != null ? true : false
   pim_mtu                                 = try(each.value.pim.mtu, local.defaults.apic.tenants.vrfs.pim.mtu)

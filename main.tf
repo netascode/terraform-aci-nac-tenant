@@ -1512,10 +1512,10 @@ module "aci_multicast_route_map" {
   description = try(each.value.description, "")
   entries = [for entry in try(each.value.entries, []) : {
     order     = entry.order
-    action    = try(entry.action, local.defaults.apic.tenants.policies.multicast_route_maps.action)
-    source_ip = try(entry.source_ip, local.defaults.apic.tenants.policies.multicast_route_maps.source_ip)
-    group_ip  = try(entry.group_ip, local.defaults.apic.tenants.policies.multicast_route_maps.group_ip)
-    rp_ip     = try(entry.rp_ip, local.defaults.apic.tenants.policies.multicast_route_maps.rp_ip)
+    action    = try(entry.action, local.defaults.apic.tenants.policies.multicast_route_maps.entries.action)
+    source_ip = try(entry.source_ip, local.defaults.apic.tenants.policies.multicast_route_maps.entries.source_ip)
+    group_ip  = try(entry.group_ip, local.defaults.apic.tenants.policies.multicast_route_maps.entries.group_ip)
+    rp_ip     = try(entry.rp_ip, local.defaults.apic.tenants.policies.multicast_route_maps.entries.rp_ip)
   }]
 
   depends_on = [

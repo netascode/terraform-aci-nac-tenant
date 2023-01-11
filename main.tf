@@ -1647,19 +1647,19 @@ module "aci_device_selection_policy" {
     module.aci_bridge_domain,
     module.aci_external_endpoint_group,
   ]
+}
 
-  module "aci_service_epg_policy" {
-    source  = "netascode/service-epg-policy/aci"
-    version = "0.1.0"
+module "aci_service_epg_policy" {
+  source  = "netascode/service-epg-policy/aci"
+  version = "0.1.0"
 
-    for_each        = { for pol in try(local.tenant.services.service_epg_policies, []) : pol.name => pol if try(local.modules.aci_service_epg_policy, true) }
-    tenant          = local.tenant.name
-    name            = "${each.value.name}${local.defaults.apic.tenants.services.service_epg_policies.name_suffix}"
-    description     = try(each.value.description, "")
-    preferred_group = try(each.value.preferred_group, local.defaults.apic.tenants.services.service_epg_policies.preferred_group)
+  for_each        = { for pol in try(local.tenant.services.service_epg_policies, []) : pol.name => pol if try(local.modules.aci_service_epg_policy, true) }
+  tenant          = local.tenant.name
+  name            = "${each.value.name}${local.defaults.apic.tenants.services.service_epg_policies.name_suffix}"
+  description     = try(each.value.description, "")
+  preferred_group = try(each.value.preferred_group, local.defaults.apic.tenants.services.service_epg_policies.preferred_group)
 
-    depends_on = [
-      module.aci_tenant,
-    ]
-  }
+  depends_on = [
+    module.aci_tenant,
+  ]
 }

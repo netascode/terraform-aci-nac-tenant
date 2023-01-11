@@ -1665,9 +1665,9 @@ module "aci_device_selection_policy" {
   consumer_external_endpoint_group_redistribute_ospf      = try(each.value.consumer.external_endpoint_group.redistribute.ospf, local.defaults.apic.tenants.services.device_selection_policies.consumer.external_endpoint_group.redistribute.ospf)
   consumer_external_endpoint_group_redistribute_connected = try(each.value.consumer.external_endpoint_group.redistribute.connected, local.defaults.apic.tenants.services.device_selection_policies.consumer.external_endpoint_group.redistribute.connected)
   consumer_external_endpoint_group_redistribute_static    = try(each.value.consumer.external_endpoint_group.redistribute.static, local.defaults.apic.tenants.services.device_selection_policies.consumer.external_endpoint_group.redistribute.static)
-  consumer_service_epg_policy                             = try("${each.value.consumer.service_epg_policy.name}${local.defaults.apic.tenants.services.service_epg_policies.name_suffix}", "")
-  consumer_service_epg_policy_tenant                      = try(each.value.consumer.service_epg_policy.tenant, local.tenant.name)
-  consumer_custom_qos_policy                              = try("${each.value.consumer.custom_qos_policy.name}${local.defaults.apic.tenants.policies.custom_qos.name_suffix}", "")
+  consumer_service_epg_policy                             = try("${each.value.consumer.service_epg_policy}${local.defaults.apic.tenants.services.service_epg_policies.name_suffix}", "")
+  consumer_service_epg_policy_tenant                      = local.tenant.name
+  consumer_custom_qos_policy                              = try("${each.value.consumer.custom_qos_policy}${local.defaults.apic.tenants.policies.custom_qos.name_suffix}", "")
   provider_l3_destination                                 = try(each.value.provider.l3_destination, local.defaults.apic.tenants.services.device_selection_policies.provider.l3_destination)
   provider_permit_logging                                 = try(each.value.provider.permit_logging, local.defaults.apic.tenants.services.device_selection_policies.provider.permit_logging)
   provider_logical_interface                              = "${each.value.provider.logical_interface}${local.defaults.apic.tenants.services.l4l7_devices.logical_interfaces.name_suffix}"
@@ -1682,9 +1682,9 @@ module "aci_device_selection_policy" {
   provider_external_endpoint_group_redistribute_ospf      = try(each.value.provider.external_endpoint_group.redistribute.ospf, local.defaults.apic.tenants.services.device_selection_policies.provider.external_endpoint_group.redistribute.ospf)
   provider_external_endpoint_group_redistribute_connected = try(each.value.provider.external_endpoint_group.redistribute.connected, local.defaults.apic.tenants.services.device_selection_policies.provider.external_endpoint_group.redistribute.connected)
   provider_external_endpoint_group_redistribute_static    = try(each.value.provider.external_endpoint_group.redistribute.static, local.defaults.apic.tenants.services.device_selection_policies.provider.external_endpoint_group.redistribute.static)
-  provider_service_epg_policy                             = try("${each.value.provider.service_epg_policy.name}${local.defaults.apic.tenants.services.service_epg_policies.name_suffix}", "")
-  provider_service_epg_policy_tenant                      = try(each.value.provider.service_epg_policy.tenant, local.tenant.name)
-  provider_custom_qos_policy                              = try("${each.value.provider.custom_qos_policy.name}${local.defaults.apic.tenants.policies.custom_qos.name_suffix}", "")
+  provider_service_epg_policy                             = try("${each.value.provider.service_epg_policy}${local.defaults.apic.tenants.services.service_epg_policies.name_suffix}", "")
+  provider_service_epg_policy_tenant                      = local.tenant.name
+  provider_custom_qos_policy                              = try("${each.value.provider.custom_qos_policy}${local.defaults.apic.tenants.policies.custom_qos.name_suffix}", "")
 
   depends_on = [
     module.aci_tenant,

@@ -1581,6 +1581,28 @@ module "aci_redirect_policy" {
   ]
 }
 
+module "aci_redirect_backup_policy" {
+  source  = "netascode/redirect-backup-policy/aci"
+  version = "0.1.0"
+
+  for_each    = { for policy in try(local.tenant.services.redirect_backup_policies, []) : policy.name => policy if lookup(local.modules, "aci_redirect_backup_policy", true) }
+  tenant      = local.tenant.name
+  name        = "${each.value.name}${local.defaults.apic.tenants.services.redirect_backup_policies.name_suffix}"
+  description = try(each.value.description, "")
+  l3_destinations = [for dest in try(each.value.l3_destinations, []) : {
+    name                  = try(dest.destination_name, "")
+    description           = try(dest.description, "")
+    ip                    = dest.ip
+    ip_2                  = try(dest.ip_2, null)
+    mac                   = dest.mac
+    redirect_health_group = try("${dest.redirect_health_group}${local.defaults.apic.tenants.services.redirect_health_groups.name_suffix}", "")
+  }]
+
+  depends_on = [
+    module.aci_tenant,
+  ]
+}
+
 module "aci_redirect_health_group" {
   source  = "netascode/redirect-health-group/aci"
   version = "0.1.0"

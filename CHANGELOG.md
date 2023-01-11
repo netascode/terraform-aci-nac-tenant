@@ -14,6 +14,7 @@
 - Add redirect backup policy
 - Add service EPG policy reference to device selection policy
 - Add custom QoS policy to device selection policy
+- Add multicast route map
 
 ## 0.3.3
 

@@ -1502,6 +1502,27 @@ module "aci_trust_control_policy" {
   ]
 }
 
+module "aci_multicast_route_map" {
+  source  = "netascode/multicast-route-map/aci"
+  version = "0.1.1"
+
+  for_each    = { for pol in try(local.tenant.policies.multicast_route_maps, []) : pol.name => pol if try(local.modules.aci_multicast_route_map, true) }
+  tenant      = local.tenant.name
+  name        = "${each.value.name}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}"
+  description = try(each.value.description, "")
+  entries = [for entry in try(each.value.entries, []) : {
+    order     = entry.order
+    action    = try(entry.action, local.defaults.apic.tenants.policies.multicast_route_maps.action)
+    source_ip = try(entry.source_ip, local.defaults.apic.tenants.policies.multicast_route_maps.source_ip)
+    group_ip  = try(entry.group_ip, local.defaults.apic.tenants.policies.multicast_route_maps.group_ip)
+    rp_ip     = try(entry.rp_ip, local.defaults.apic.tenants.policies.multicast_route_maps.rp_ip)
+  }]
+
+  depends_on = [
+    module.aci_tenant,
+  ]
+}
+
 module "aci_l4l7_device" {
   source  = "netascode/l4l7-device/aci"
   version = "0.2.3"

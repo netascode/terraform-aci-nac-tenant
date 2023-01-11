@@ -1482,6 +1482,26 @@ module "aci_pim_policy" {
   ]
 }
 
+module "aci_trust_control_policy" {
+  source  = "netascode/trust-control-policy/aci"
+  version = "0.1.0"
+
+  for_each       = { for pol in try(local.tenant.policies.trust_control_policies, []) : pol.name => pol if try(local.modules.aci_trust_control_policy, true) }
+  tenant         = local.tenant.name
+  name           = "${each.value.name}${local.defaults.apic.tenants.policies.trust_control_policies.name_suffix}"
+  description    = try(each.value.description, "")
+  dhcp_v4_server = try(each.value.dhcp_v4_server, local.defaults.apic.tenants.policies.trust_control_policies.dhcp_v4_server)
+  dhcp_v6_server = try(each.value.dhcp_v6_server, local.defaults.apic.tenants.policies.trust_control_policies.dhcp_v6_server)
+  ipv6_router    = try(each.value.ipv6_router, local.defaults.apic.tenants.policies.trust_control_policies.ipv6_router)
+  arp            = try(each.value.arp, local.defaults.apic.tenants.policies.trust_control_policies.arp)
+  nd             = try(each.value.nd, local.defaults.apic.tenants.policies.trust_control_policies.nd)
+  ra             = try(each.value.ra, local.defaults.apic.tenants.policies.trust_control_policies.ra)
+
+  depends_on = [
+    module.aci_tenant,
+  ]
+}
+
 module "aci_l4l7_device" {
   source  = "netascode/l4l7-device/aci"
   version = "0.2.3"

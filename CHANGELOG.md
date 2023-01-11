@@ -10,6 +10,7 @@
 - Add PIM policy
 - Add VRF BGP IPv4/IPv6 import/export route targets
 - Add service EPG policy
+- Add trust control policy
 
 ## 0.3.3
 

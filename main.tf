@@ -1643,42 +1643,48 @@ module "aci_service_graph_template" {
 
 module "aci_device_selection_policy" {
   source  = "netascode/device-selection-policy/aci"
-  version = "0.1.0"
+  version = "0.1.1"
 
-  for_each                                                = { for pol in lookup(lookup(local.tenant, "services", {}), "device_selection_policies", []) : "${pol.contract}/${pol.service_graph_template}" => pol if lookup(local.modules, "aci_device_selection_policy", true) }
+  for_each                                                = { for pol in try(local.tenant.services.device_selection_policies, []) : "${pol.contract}/${pol.service_graph_template}" => pol if lookup(local.modules, "aci_device_selection_policy", true) }
   tenant                                                  = local.tenant.name
   contract                                                = "${each.value.contract}${local.defaults.apic.tenants.contracts.name_suffix}"
   service_graph_template                                  = "${each.value.service_graph_template}${local.defaults.apic.tenants.services.service_graph_templates.name_suffix}"
-  sgt_device_tenant                                       = length(lookup(lookup(local.tenant, "services", {}), "service_graph_templates", [])) != 0 ? [for sg_template in lookup(lookup(local.tenant, "services", {}), "service_graph_templates", []) : lookup(sg_template.device, "tenant", local.tenant.name) if sg_template.name == each.value.service_graph_template][0] : local.tenant.name
-  sgt_device_name                                         = length(lookup(lookup(local.tenant, "services", {}), "service_graph_templates", [])) != 0 ? [for sg_template in lookup(lookup(local.tenant, "services", {}), "service_graph_templates", []) : "${sg_template.device.name}${local.defaults.apic.tenants.services.l4l7_devices.name_suffix}" if sg_template.name == each.value.service_graph_template][0] : ""
-  consumer_l3_destination                                 = lookup(each.value.consumer, "l3_destination", local.defaults.apic.tenants.services.device_selection_policies.consumer.l3_destination)
-  consumer_permit_logging                                 = lookup(each.value.consumer, "permit_logging", local.defaults.apic.tenants.services.device_selection_policies.consumer.permit_logging)
+  sgt_device_tenant                                       = length(try(local.tenant.services.service_graph_templates, [])) != 0 ? [for sg_template in try(local.tenant.services.service_graph_templates, []) : try(sg_template.device.tenant, local.tenant.name) if sg_template.name == each.value.service_graph_template][0] : local.tenant.name
+  sgt_device_name                                         = length(try(local.tenant.services.service_graph_templates, [])) != 0 ? [for sg_template in try(local.tenant.services.service_graph_templates, []) : "${sg_template.device.name}${local.defaults.apic.tenants.services.l4l7_devices.name_suffix}" if sg_template.name == each.value.service_graph_template][0] : ""
+  consumer_l3_destination                                 = try(each.value.consumer.l3_destination, local.defaults.apic.tenants.services.device_selection_policies.consumer.l3_destination)
+  consumer_permit_logging                                 = try(each.value.consumer.permit_logging, local.defaults.apic.tenants.services.device_selection_policies.consumer.permit_logging)
   consumer_logical_interface                              = "${each.value.consumer.logical_interface}${local.defaults.apic.tenants.services.l4l7_devices.logical_interfaces.name_suffix}"
-  consumer_redirect_policy                                = lookup(each.value.consumer, "redirect_policy", null) != null ? "${each.value.consumer.redirect_policy.name}${local.defaults.apic.tenants.services.redirect_policies.name_suffix}" : ""
-  consumer_redirect_policy_tenant                         = lookup(lookup(each.value.consumer, "redirect_policy", {}), "tenant", local.tenant.name)
-  consumer_bridge_domain                                  = lookup(each.value.consumer, "bridge_domain", null) != null ? "${each.value.consumer.bridge_domain.name}${local.defaults.apic.tenants.bridge_domains.name_suffix}" : ""
-  consumer_bridge_domain_tenant                           = lookup(lookup(each.value.consumer, "bridge_domain", {}), "tenant", local.tenant.name)
-  consumer_external_endpoint_group                        = lookup(each.value.consumer, "external_endpoint_group", null) != null ? "${each.value.consumer.external_endpoint_group.name}${local.defaults.apic.tenants.l3outs.external_endpoint_groups.name_suffix}" : ""
-  consumer_external_endpoint_group_l3out                  = lookup(each.value.consumer, "external_endpoint_group", null) != null ? "${each.value.consumer.external_endpoint_group.l3out}${local.defaults.apic.tenants.l3outs.name_suffix}" : ""
-  consumer_external_endpoint_group_tenant                 = lookup(lookup(each.value.consumer, "external_endpoint_group", {}), "tenant", local.tenant.name)
-  consumer_external_endpoint_group_redistribute_bgp       = lookup(lookup(lookup(each.value.consumer, "external_endpoint_group", {}), "redistribute", {}), "bgp", local.defaults.apic.tenants.services.device_selection_policies.consumer.external_endpoint_group.redistribute.bgp)
-  consumer_external_endpoint_group_redistribute_ospf      = lookup(lookup(lookup(each.value.consumer, "external_endpoint_group", {}), "redistribute", {}), "ospf", local.defaults.apic.tenants.services.device_selection_policies.consumer.external_endpoint_group.redistribute.ospf)
-  consumer_external_endpoint_group_redistribute_connected = lookup(lookup(lookup(each.value.consumer, "external_endpoint_group", {}), "redistribute", {}), "connected", local.defaults.apic.tenants.services.device_selection_policies.consumer.external_endpoint_group.redistribute.connected)
-  consumer_external_endpoint_group_redistribute_static    = lookup(lookup(lookup(each.value.consumer, "external_endpoint_group", {}), "redistribute", {}), "static", local.defaults.apic.tenants.services.device_selection_policies.consumer.external_endpoint_group.redistribute.static)
-  provider_l3_destination                                 = lookup(each.value.provider, "l3_destination", local.defaults.apic.tenants.services.device_selection_policies.provider.l3_destination)
-  provider_permit_logging                                 = lookup(each.value.provider, "permit_logging", local.defaults.apic.tenants.services.device_selection_policies.provider.permit_logging)
+  consumer_redirect_policy                                = try("${each.value.consumer.redirect_policy.name}${local.defaults.apic.tenants.services.redirect_policies.name_suffix}", "")
+  consumer_redirect_policy_tenant                         = try(each.value.consumer.redirect_policy.tenant, local.tenant.name)
+  consumer_bridge_domain                                  = try("${each.value.consumer.bridge_domain.name}${local.defaults.apic.tenants.bridge_domains.name_suffix}", "")
+  consumer_bridge_domain_tenant                           = try(each.value.consumer.bridge_domain.tenant, local.tenant.name)
+  consumer_external_endpoint_group                        = try("${each.value.consumer.external_endpoint_group.name}${local.defaults.apic.tenants.l3outs.external_endpoint_groups.name_suffix}", "")
+  consumer_external_endpoint_group_l3out                  = try("${each.value.consumer.external_endpoint_group.l3out}${local.defaults.apic.tenants.l3outs.name_suffix}", "")
+  consumer_external_endpoint_group_tenant                 = try(each.value.consumer.external_endpoint_group.tenant, local.tenant.name)
+  consumer_external_endpoint_group_redistribute_bgp       = try(each.value.consumer.external_endpoint_group.redistribute.bgp, local.defaults.apic.tenants.services.device_selection_policies.consumer.external_endpoint_group.redistribute.bgp)
+  consumer_external_endpoint_group_redistribute_ospf      = try(each.value.consumer.external_endpoint_group.redistribute.ospf, local.defaults.apic.tenants.services.device_selection_policies.consumer.external_endpoint_group.redistribute.ospf)
+  consumer_external_endpoint_group_redistribute_connected = try(each.value.consumer.external_endpoint_group.redistribute.connected, local.defaults.apic.tenants.services.device_selection_policies.consumer.external_endpoint_group.redistribute.connected)
+  consumer_external_endpoint_group_redistribute_static    = try(each.value.consumer.external_endpoint_group.redistribute.static, local.defaults.apic.tenants.services.device_selection_policies.consumer.external_endpoint_group.redistribute.static)
+  consumer_service_epg_policy                             = try("${each.value.consumer.service_epg_policy.name}${local.defaults.apic.tenants.services.service_epg_policies.name_suffix}", "")
+  consumer_service_epg_policy_tenant                      = try(each.value.consumer.service_epg_policy.tenant, local.tenant.name)
+  consumer_custom_qos_policy                              = try("${each.value.consumer.custom_qos_policy.name}${local.defaults.apic.tenants.policies.custom_qos.name_suffix}", "")
+  provider_l3_destination                                 = try(each.value.provider.l3_destination, local.defaults.apic.tenants.services.device_selection_policies.provider.l3_destination)
+  provider_permit_logging                                 = try(each.value.provider.permit_logging, local.defaults.apic.tenants.services.device_selection_policies.provider.permit_logging)
   provider_logical_interface                              = "${each.value.provider.logical_interface}${local.defaults.apic.tenants.services.l4l7_devices.logical_interfaces.name_suffix}"
-  provider_redirect_policy                                = lookup(each.value.provider, "redirect_policy", null) != null ? "${each.value.provider.redirect_policy.name}${local.defaults.apic.tenants.services.redirect_policies.name_suffix}" : ""
-  provider_redirect_policy_tenant                         = lookup(lookup(each.value.provider, "redirect_policy", {}), "tenant", local.tenant.name)
-  provider_bridge_domain                                  = lookup(each.value.provider, "bridge_domain", null) != null ? "${each.value.provider.bridge_domain.name}${local.defaults.apic.tenants.bridge_domains.name_suffix}" : ""
-  provider_bridge_domain_tenant                           = lookup(lookup(each.value.provider, "bridge_domain", {}), "tenant", local.tenant.name)
-  provider_external_endpoint_group                        = lookup(each.value.provider, "external_endpoint_group", null) != null ? "${each.value.provider.external_endpoint_group.name}${local.defaults.apic.tenants.l3outs.external_endpoint_groups.name_suffix}" : ""
-  provider_external_endpoint_group_l3out                  = lookup(each.value.provider, "external_endpoint_group", null) != null ? "${each.value.provider.external_endpoint_group.l3out}${local.defaults.apic.tenants.l3outs.name_suffix}" : ""
-  provider_external_endpoint_group_tenant                 = lookup(lookup(each.value.provider, "external_endpoint_group", {}), "tenant", local.tenant.name)
-  provider_external_endpoint_group_redistribute_bgp       = lookup(lookup(lookup(each.value.provider, "external_endpoint_group", {}), "redistribute", {}), "bgp", local.defaults.apic.tenants.services.device_selection_policies.provider.external_endpoint_group.redistribute.bgp)
-  provider_external_endpoint_group_redistribute_ospf      = lookup(lookup(lookup(each.value.provider, "external_endpoint_group", {}), "redistribute", {}), "ospf", local.defaults.apic.tenants.services.device_selection_policies.provider.external_endpoint_group.redistribute.ospf)
-  provider_external_endpoint_group_redistribute_connected = lookup(lookup(lookup(each.value.provider, "external_endpoint_group", {}), "redistribute", {}), "connected", local.defaults.apic.tenants.services.device_selection_policies.provider.external_endpoint_group.redistribute.connected)
-  provider_external_endpoint_group_redistribute_static    = lookup(lookup(lookup(each.value.provider, "external_endpoint_group", {}), "redistribute", {}), "static", local.defaults.apic.tenants.services.device_selection_policies.provider.external_endpoint_group.redistribute.static)
+  provider_redirect_policy                                = try("${each.value.provider.redirect_policy.name}${local.defaults.apic.tenants.services.redirect_policies.name_suffix}", "")
+  provider_redirect_policy_tenant                         = try(each.value.provider.redirect_policy.tenant, local.tenant.name)
+  provider_bridge_domain                                  = try("${each.value.provider.bridge_domain.name}${local.defaults.apic.tenants.bridge_domains.name_suffix}", "")
+  provider_bridge_domain_tenant                           = try(each.value.provider.bridge_domain.tenant, local.tenant.name)
+  provider_external_endpoint_group                        = try("${each.value.provider.external_endpoint_group.name}${local.defaults.apic.tenants.l3outs.external_endpoint_groups.name_suffix}", "")
+  provider_external_endpoint_group_l3out                  = try("${each.value.provider.external_endpoint_group.l3out}${local.defaults.apic.tenants.l3outs.name_suffix}", "")
+  provider_external_endpoint_group_tenant                 = try(each.value.provider.external_endpoint_group.tenant, local.tenant.name)
+  provider_external_endpoint_group_redistribute_bgp       = try(each.value.provider.external_endpoint_group.redistribute.bgp, local.defaults.apic.tenants.services.device_selection_policies.provider.external_endpoint_group.redistribute.bgp)
+  provider_external_endpoint_group_redistribute_ospf      = try(each.value.provider.external_endpoint_group.redistribute.ospf, local.defaults.apic.tenants.services.device_selection_policies.provider.external_endpoint_group.redistribute.ospf)
+  provider_external_endpoint_group_redistribute_connected = try(each.value.provider.external_endpoint_group.redistribute.connected, local.defaults.apic.tenants.services.device_selection_policies.provider.external_endpoint_group.redistribute.connected)
+  provider_external_endpoint_group_redistribute_static    = try(each.value.provider.external_endpoint_group.redistribute.static, local.defaults.apic.tenants.services.device_selection_policies.provider.external_endpoint_group.redistribute.static)
+  provider_service_epg_policy                             = try("${each.value.provider.service_epg_policy.name}${local.defaults.apic.tenants.services.service_epg_policies.name_suffix}", "")
+  provider_service_epg_policy_tenant                      = try(each.value.provider.service_epg_policy.tenant, local.tenant.name)
+  provider_custom_qos_policy                              = try("${each.value.provider.custom_qos_policy.name}${local.defaults.apic.tenants.policies.custom_qos.name_suffix}", "")
 
   depends_on = [
     module.aci_tenant,

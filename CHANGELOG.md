@@ -12,6 +12,8 @@
 - Add service EPG policy
 - Add trust control policy
 - Add redirect backup policy
+- Add service EPG policy reference to device selection policy
+- Add custom QoS policy to device selection policy
 
 ## 0.3.3
 

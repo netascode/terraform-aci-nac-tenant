@@ -1798,3 +1798,43 @@ module "aci_service_epg_policy" {
     module.aci_tenant,
   ]
 }
+
+module "aci_tenant_span_destination_group" {
+  source  = "netascode/tenant-span-destination-group/aci"
+  version = "0.1.0"
+
+  for_each                        = { for span in try(local.tenant.policies.span.destination_groups, []) : span.name => span if lookup(local.modules, "aci_tenant_span_destination_group", true) }
+  tenant                          = local.tenant.name
+  name                            = "${each.value.name}${local.defaults.apic.tenants.policies.span.destination_groups.name_suffix}"
+  description                     = try(each.value.description, "")
+  destination_tenant              = try(each.value.tenant, "")
+  destination_application_profile = each.value.application_profile
+  destination_endpoint_group      = each.value.endpoint_group
+  ip                              = each.value.ip
+  source_prefix                   = each.value.source_prefix
+  dscp                            = try(each.value.dscp, local.defaults.apic.tenants.policies.span.destination_groups.dscp)
+  flow_id                         = try(each.value.flow_id, local.defaults.apic.tenants.policies.span.destination_groups.flow_id)
+  mtu                             = try(each.value.mtu, local.defaults.apic.tenants.policies.span.destination_groups.mtu)
+  ttl                             = try(each.value.ttl, local.defaults.apic.tenants.policies.span.destination_groups.ttl)
+  span_version                    = try(each.value.version, local.defaults.apic.tenants.policies.span.destination_groups.version)
+  enforce_version                 = try(each.value.enforce_version, local.defaults.apic.tenants.policies.span.destination_groups.enforce_version)
+}
+
+module "aci_tenant_span_source_group" {
+  source  = "netascode/tenant-span-source-group/aci"
+  version = "0.1.0"
+
+  for_each    = { for span in try(local.tenant.policies.span.source_groups, []) : span.name => span if lookup(local.modules, "aci_tenant_span_source_group", true) }
+  tenant      = local.tenant.name
+  name        = "${each.value.name}${local.defaults.apic.tenants.policies.span.source_groups.name_suffix}"
+  description = try(each.value.description, "")
+  admin_state = try(each.value.admin_state, local.defaults.apic.tenants.policies.span.source_groups.admin_state)
+  destination = each.value.destination
+  sources = [for s in try(each.value.sources, []) : {
+    name                = "${s.name}${local.defaults.apic.tenants.policies.span.source_groups.sources.name_suffix}"
+    description         = try(s.description, "")
+    direction           = try(s.direction, local.defaults.apic.tenants.policies.span.source_groups.sources.direction)
+    application_profile = try(s.application_profile, null)
+    endpoint_group      = try(s.endpoint_group, null)
+  }]
+}

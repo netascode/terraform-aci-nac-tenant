@@ -20,6 +20,8 @@
 - Add trust control policy to EPGs
 - Add L4L7 virtual IPs to EPGs
 - Add L4L7 address pools to EPGs
+- Add tenant SPAN destination group
+- Add tenant SPAN source group
 
 ## 0.3.3
 

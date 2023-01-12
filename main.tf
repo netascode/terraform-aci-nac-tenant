@@ -1831,7 +1831,7 @@ module "aci_tenant_span_source_group" {
   admin_state = try(each.value.admin_state, local.defaults.apic.tenants.policies.span.source_groups.admin_state)
   destination = each.value.destination
   sources = [for s in try(each.value.sources, []) : {
-    name                = "${s.name}${local.defaults.apic.tenants.policies.span.source_groups.sources.name_suffix}"
+    name                = s.name
     description         = try(s.description, "")
     direction           = try(s.direction, local.defaults.apic.tenants.policies.span.source_groups.sources.direction)
     application_profile = try(s.application_profile, null)

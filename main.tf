@@ -103,8 +103,8 @@ locals {
           node2_id       = try(se.node2_id, [for pg in local.leaf_interface_policy_group_mapping : pg.type if pg.name == se.channel && pg.type == "vpc"][0], null)
           pod_id         = try(se.pod_id, 1)
           channel        = try("${se.channel}${local.defaults.apic.access_policies.leaf_interface_policy_groups.name_suffix}", null)
-          port           = try(ep.port, null)
-          module         = try(sp.module, 1)
+          port           = try(se.port, null)
+          module         = try(se.module, 1)
           vlan           = try(se.vlan, null)
           additional_ips = try(se.additional_ips, [])
         }]

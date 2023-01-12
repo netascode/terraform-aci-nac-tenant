@@ -1818,6 +1818,10 @@ module "aci_tenant_span_destination_group" {
   ttl                             = try(each.value.ttl, local.defaults.apic.tenants.policies.span.destination_groups.ttl)
   span_version                    = try(each.value.version, local.defaults.apic.tenants.policies.span.destination_groups.version)
   enforce_version                 = try(each.value.enforce_version, local.defaults.apic.tenants.policies.span.destination_groups.enforce_version)
+
+  depends_on = [
+    module.aci_tenant,
+  ]
 }
 
 module "aci_tenant_span_source_group" {
@@ -1837,4 +1841,8 @@ module "aci_tenant_span_source_group" {
     application_profile = try(s.application_profile, null)
     endpoint_group      = try(s.endpoint_group, null)
   }]
+
+  depends_on = [
+    module.aci_tenant,
+  ]
 }

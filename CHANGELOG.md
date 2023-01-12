@@ -15,6 +15,11 @@
 - Add service EPG policy reference to device selection policy
 - Add custom QoS policy to device selection policy
 - Add multicast route map
+- Add static endpoints to EPGs
+- Add tags to EPGs
+- Add trust control policy to EPGs
+- Add L4L7 virtual IPs to EPGs
+- Add L4L7 address pools to EPGs
 
 ## 0.3.3
 

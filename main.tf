@@ -18,60 +18,105 @@ locals {
   ]
 
   # first iteration to resolve node_id and determine IPG type for static ports
-  endpoint_groups = flatten([for ap in lookup(local.tenant, "application_profiles", []) : [
-    for epg in lookup(ap, "endpoint_groups", []) : {
+  endpoint_groups = flatten([for ap in try(local.tenant.application_profiles, []) : [
+    for epg in try(ap.endpoint_groups, []) : {
       key = "${ap.name}/${epg.name}"
       value = {
         application_profile         = "${ap.name}${local.defaults.apic.tenants.application_profiles.name_suffix}"
         name                        = "${epg.name}${local.defaults.apic.tenants.application_profiles.endpoint_groups.name_suffix}"
-        alias                       = lookup(epg, "alias", "")
-        description                 = lookup(epg, "description", "")
-        flood_in_encap              = lookup(epg, "flood_in_encap", local.defaults.apic.tenants.application_profiles.endpoint_groups.flood_in_encap)
-        intra_epg_isolation         = lookup(epg, "intra_epg_isolation", local.defaults.apic.tenants.application_profiles.endpoint_groups.intra_epg_isolation)
-        preferred_group             = lookup(epg, "preferred_group", local.defaults.apic.tenants.application_profiles.endpoint_groups.preferred_group)
-        qos_class                   = lookup(epg, "qos_class", local.defaults.apic.tenants.application_profiles.endpoint_groups.qos_class)
-        custom_qos_policy           = lookup(epg, "custom_qos_policy", null) != null ? "${epg.custom_qos_policy}${local.defaults.apic.tenants.policies.custom_qos.name_suffix}" : ""
-        bridge_domain               = lookup(epg, "bridge_domain", null) != null ? "${epg.bridge_domain}${local.defaults.apic.tenants.bridge_domains.name_suffix}" : ""
-        contract_consumers          = lookup(lookup(epg, "contracts", {}), "consumers", null) != null ? [for contract in epg.contracts.consumers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
-        contract_providers          = lookup(lookup(epg, "contracts", {}), "providers", null) != null ? [for contract in epg.contracts.providers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
-        contract_imported_consumers = lookup(lookup(epg, "contracts", {}), "imported_consumers", null) != null ? [for contract in epg.contracts.imported_consumers : "${contract}${local.defaults.apic.tenants.imported_contracts.name_suffix}"] : []
-        contract_intra_epgs         = lookup(lookup(epg, "contracts", {}), "intra_epgs", null) != null ? [for contract in epg.contracts.intra_epgs : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"] : []
-        physical_domains            = lookup(epg, "physical_domains", null) != null ? [for domain in epg.physical_domains : "${domain}${local.defaults.apic.access_policies.physical_domains.name_suffix}"] : []
-        static_ports = [for sp in lookup(epg, "static_ports", []) : {
-          node_id = lookup(sp, "node_id", lookup(sp, "channel", null) != null ? try([for pg in local.leaf_interface_policy_group_mapping : lookup(pg, "node_ids", []) if pg.name == lookup(sp, "channel", null)][0][0], null) : null)
-          # set node2_id to "vpc" if channel IPG is vPC, otherwise "null"
-          node2_id             = lookup(sp, "node2_id", lookup(sp, "channel", null) != null ? try([for pg in local.leaf_interface_policy_group_mapping : pg.type if pg.name == lookup(sp, "channel", null) && pg.type == "vpc"][0], null) : null)
-          pod_id               = lookup(sp, "pod_id", null)
-          channel              = lookup(sp, "channel", null) != null ? "${sp.channel}${local.defaults.apic.access_policies.leaf_interface_policy_groups.name_suffix}" : null
-          port                 = lookup(sp, "port", null)
-          sub_port             = lookup(sp, "sub_port", null)
-          module               = lookup(sp, "module", null)
-          vlan                 = lookup(sp, "vlan", null)
-          deployment_immediacy = lookup(sp, "deployment_immediacy", local.defaults.apic.tenants.application_profiles.endpoint_groups.static_ports.deployment_immediacy)
-          mode                 = lookup(sp, "mode", local.defaults.apic.tenants.application_profiles.endpoint_groups.static_ports.mode)
-        }]
-        vmware_vmm_domains = [for vmm in lookup(epg, "vmware_vmm_domains", []) : {
-          name                 = "${vmm.name}${local.defaults.apic.fabric_policies.vmware_vmm_domains.name_suffix}"
-          u_segmentation       = lookup(vmm, "u_segmentation", local.defaults.apic.tenants.application_profiles.endpoint_groups.vmware_vmm_domains.u_segmentation)
-          delimiter            = lookup(vmm, "delimiter", local.defaults.apic.tenants.application_profiles.endpoint_groups.vmware_vmm_domains.delimiter)
-          vlan                 = lookup(vmm, "vlan", null)
-          primary_vlan         = lookup(vmm, "primary_vlan", null)
-          secondary_vlan       = lookup(vmm, "secondary_vlan", null)
-          netflow              = lookup(vmm, "netflow", local.defaults.apic.tenants.application_profiles.endpoint_groups.vmware_vmm_domains.netflow)
-          deployment_immediacy = lookup(vmm, "deployment_immediacy", local.defaults.apic.tenants.application_profiles.endpoint_groups.vmware_vmm_domains.deployment_immediacy)
-          resolution_immediacy = lookup(vmm, "resolution_immediacy", local.defaults.apic.tenants.application_profiles.endpoint_groups.vmware_vmm_domains.resolution_immediacy)
-          allow_promiscuous    = lookup(vmm, "allow_promiscuous", local.defaults.apic.tenants.application_profiles.endpoint_groups.vmware_vmm_domains.allow_promiscuous) == "accept" ? true : false
-          forged_transmits     = lookup(vmm, "forged_transmits", local.defaults.apic.tenants.application_profiles.endpoint_groups.vmware_vmm_domains.forged_transmits) == "accept" ? true : false
-          mac_changes          = lookup(vmm, "mac_changes", local.defaults.apic.tenants.application_profiles.endpoint_groups.vmware_vmm_domains.mac_changes) == "accept" ? true : false
-        }]
-        subnets = [for subnet in lookup(epg, "subnets", []) : {
-          description        = lookup(subnet, "description", "")
+        alias                       = try(epg.alias, "")
+        description                 = try(epg.description, "")
+        flood_in_encap              = try(epg.flood_in_encap, local.defaults.apic.tenants.application_profiles.endpoint_groups.flood_in_encap)
+        intra_epg_isolation         = try(epg.intra_epg_isolation, local.defaults.apic.tenants.application_profiles.endpoint_groups.intra_epg_isolation)
+        preferred_group             = try(epg.preferred_group, local.defaults.apic.tenants.application_profiles.endpoint_groups.preferred_group)
+        qos_class                   = try(epg.qos_class, local.defaults.apic.tenants.application_profiles.endpoint_groups.qos_class)
+        custom_qos_policy           = try("${epg.custom_qos_policy}${local.defaults.apic.tenants.policies.custom_qos.name_suffix}", "")
+        bridge_domain               = try("${epg.bridge_domain}${local.defaults.apic.tenants.bridge_domains.name_suffix}", "")
+        tags                        = try(epg.tags, [])
+        trust_control_policy        = try("${epg.trust_control_policy}${local.defaults.apic.tenants.policies.trust_control_policies.name_suffix}", "")
+        contract_consumers          = try([for contract in epg.contracts.consumers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"], [])
+        contract_providers          = try([for contract in epg.contracts.providers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"], [])
+        contract_imported_consumers = try([for contract in epg.contracts.imported_consumers : "${contract}${local.defaults.apic.tenants.imported_contracts.name_suffix}"], [])
+        contract_intra_epgs         = try([for contract in epg.contracts.intra_epgs : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"], [])
+        physical_domains            = try([for domain in epg.physical_domains : "${domain}${local.defaults.apic.access_policies.physical_domains.name_suffix}"], [])
+        subnets = [for subnet in try(epg.subnets, []) : {
+          description        = try(subnet.description, "")
           ip                 = subnet.ip
-          public             = lookup(subnet, "public", local.defaults.apic.tenants.application_profiles.endpoint_groups.subnets.public)
-          shared             = lookup(subnet, "shared", local.defaults.apic.tenants.application_profiles.endpoint_groups.subnets.shared)
-          igmp_querier       = lookup(subnet, "igmp_querier", local.defaults.apic.tenants.application_profiles.endpoint_groups.subnets.igmp_querier)
-          nd_ra_prefix       = lookup(subnet, "nd_ra_prefix", local.defaults.apic.tenants.application_profiles.endpoint_groups.subnets.nd_ra_prefix)
-          no_default_gateway = lookup(subnet, "no_default_gateway", local.defaults.apic.tenants.application_profiles.endpoint_groups.subnets.no_default_gateway)
+          public             = try(subnet.public, local.defaults.apic.tenants.application_profiles.endpoint_groups.subnets.public)
+          shared             = try(subnet.shared, local.defaults.apic.tenants.application_profiles.endpoint_groups.subnets.shared)
+          igmp_querier       = try(subnet.igmp_querier, local.defaults.apic.tenants.application_profiles.endpoint_groups.subnets.igmp_querier)
+          nd_ra_prefix       = try(subnet.nd_ra_prefix, local.defaults.apic.tenants.application_profiles.endpoint_groups.subnets.nd_ra_prefix)
+          no_default_gateway = try(subnet.no_default_gateway, local.defaults.apic.tenants.application_profiles.endpoint_groups.subnets.no_default_gateway)
+          next_hop_ip        = try(subnet.next_hop_ip, "")
+          anycast_mac        = try(subnet.anycast_mac, "")
+          nlb_group          = try(subnet.nlb_group, "0.0.0.0")
+          nlb_mac            = try(subnet.nlb_mac, "00:00:00:00:00:00")
+          nlb_mode           = try(subnet.nlb_mode, "")
+          ip_pools = [for pool in try(subnet.ip_pools, []) : {
+            name              = "${pool.name}${local.defaults.apic.tenants.application_profiles.endpoint_groups.subnets.ip_pools.name_suffix}"
+            start_ip          = try(pool.start_ip, "")
+            end_ip            = try(pool.end_ip, "")
+            dns_search_suffix = try(pool.dns_search_suffix, "")
+            dns_server        = try(pool.dns_server, "")
+            dns_suffix        = try(pool.dns_suffix, "")
+            wins_server       = try(pool.wins_server, "")
+          }]
+        }]
+        vmware_vmm_domains = [for vmm in try(epg.vmware_vmm_domains, []) : {
+          name                 = "${vmm.name}${local.defaults.apic.fabric_policies.vmware_vmm_domains.name_suffix}"
+          u_segmentation       = try(vmm.u_segmentation, local.defaults.apic.tenants.application_profiles.endpoint_groups.vmware_vmm_domains.u_segmentation)
+          delimiter            = try(vmm.delimiter, local.defaults.apic.tenants.application_profiles.endpoint_groups.vmware_vmm_domains.delimiter)
+          vlan                 = try(vmm.vlan, null)
+          primary_vlan         = try(vmm.primary_vlan, null)
+          secondary_vlan       = try(vmm.secondary_vlan, null)
+          netflow              = try(vmm.netflow, local.defaults.apic.tenants.application_profiles.endpoint_groups.vmware_vmm_domains.netflow)
+          deployment_immediacy = try(vmm.deployment_immediacy, local.defaults.apic.tenants.application_profiles.endpoint_groups.vmware_vmm_domains.deployment_immediacy)
+          resolution_immediacy = try(vmm.resolution_immediacy, local.defaults.apic.tenants.application_profiles.endpoint_groups.vmware_vmm_domains.resolution_immediacy)
+          allow_promiscuous    = try(vmm.allow_promiscuous, local.defaults.apic.tenants.application_profiles.endpoint_groups.vmware_vmm_domains.allow_promiscuous) == "accept" ? true : false
+          forged_transmits     = try(vmm.forged_transmits, local.defaults.apic.tenants.application_profiles.endpoint_groups.vmware_vmm_domains.forged_transmits) == "accept" ? true : false
+          mac_changes          = try(vmm.mac_changes, local.defaults.apic.tenants.application_profiles.endpoint_groups.vmware_vmm_domains.mac_changes) == "accept" ? true : false
+          custom_epg_name      = try(vmm.custom_epg_name, "")
+        }]
+        static_ports = [for sp in try(epg.static_ports, []) : {
+          node_id = try(sp.node_id, [for pg in local.leaf_interface_policy_group_mapping : pg.node_ids if pg.name == sp.channel][0][0], null)
+          # set node2_id to "vpc" if channel IPG is vPC, otherwise "null"
+          node2_id             = try(sp.node2_id, [for pg in local.leaf_interface_policy_group_mapping : pg.type if pg.name == sp.channel && pg.type == "vpc"][0], null)
+          fex_id               = try(sp.fex_id, null)
+          fex2_id              = try(sp.fex2_id, null)
+          pod_id               = try(sp.pod_id, null)
+          channel              = try("${sp.channel}${local.defaults.apic.access_policies.leaf_interface_policy_groups.name_suffix}", null)
+          port                 = try(sp.port, null)
+          sub_port             = try(sp.sub_port, null)
+          module               = try(sp.module, null)
+          vlan                 = try(sp.vlan, null)
+          deployment_immediacy = try(sp.deployment_immediacy, local.defaults.apic.tenants.application_profiles.endpoint_groups.static_ports.deployment_immediacy)
+          mode                 = try(sp.mode, local.defaults.apic.tenants.application_profiles.endpoint_groups.static_ports.mode)
+        }]
+        static_endpoints = [for se in try(epg.static_endpoints, []) : {
+          name    = "${se.name}${local.defaults.apic.tenants.application_profiles.endpoint_groups.static_endpoints.name_suffix}"
+          alias   = try(se.alias, "")
+          mac     = se.mac
+          ip      = try(se.ip, local.defaults.apic.tenants.application_profiles.endpoint_groups.static_endpoints.ip)
+          type    = se.type
+          node_id = try(se.node_id, [for pg in local.leaf_interface_policy_group_mapping : pg.node_ids if pg.name == se.channel][0][0], null)
+          # set node2_id to "vpc" if channel IPG is vPC, otherwise "null"
+          node2_id       = try(se.node2_id, [for pg in local.leaf_interface_policy_group_mapping : pg.type if pg.name == se.channel && pg.type == "vpc"][0], null)
+          pod_id         = try(se.pod_id, 1)
+          channel        = try("${se.channel}${local.defaults.apic.access_policies.leaf_interface_policy_groups.name_suffix}", null)
+          port           = try(ep.port, null)
+          module         = try(sp.module, 1)
+          vlan           = try(se.vlan, null)
+          additional_ips = try(se.additional_ips, [])
+        }]
+        l4l7_virtual_ips = [for vip in try(epg.l4l7_virtual_ips, []) : {
+          ip          = vip.ip
+          description = try(vip.description, "")
+        }]
+        l4l7_address_pools = [for ap in try(epg.l4l7_address_pools, []) : {
+          name            = ap.name
+          gateway_address = ap.gateway_address
+          from            = try(ap.from, "")
+          to              = try(ap.to, "")
         }]
       }
     }]
@@ -685,15 +730,21 @@ module "aci_endpoint_group" {
   qos_class                   = each.value.qos_class
   custom_qos_policy           = each.value.custom_qos_policy
   bridge_domain               = each.value.bridge_domain
+  tags                        = each.value.tags
+  trust_control_policy        = each.value.trust_control_policy
   contract_consumers          = each.value.contract_consumers
   contract_providers          = each.value.contract_providers
   contract_imported_consumers = each.value.contract_imported_consumers
   contract_intra_epgs         = each.value.contract_intra_epgs
   physical_domains            = each.value.physical_domains
+  subnets                     = each.value.subnets
+  vmware_vmm_domains          = each.value.vmware_vmm_domains
   static_ports = [for sp in lookup(each.value, "static_ports", []) : {
     node_id              = sp.node_id
-    node2_id             = sp.node2_id == "vpc" ? [for pg in local.leaf_interface_policy_group_mapping : lookup(pg, "node_ids", []) if pg.name == sp.channel][0][1] : sp.node2_id
-    pod_id               = sp.pod_id != null ? sp.pod_id : try([for node in lookup(local.node_policies, "nodes", []) : node.pod if node.id == sp.node_id][0], local.defaults.apic.node_policies.nodes.pod)
+    node2_id             = sp.node2_id == "vpc" ? [for pg in local.leaf_interface_policy_group_mapping : try(pg.node_ids, []) if pg.name == sp.channel][0][1] : sp.node2_id
+    fex_id               = sp.fex_id
+    fex2_id              = sp.fex2_id
+    pod_id               = try(sp.pod_id, [for node in try(local.node_policies.nodes, []) : node.pod if node.id == sp.node_id][0], local.defaults.apic.node_policies.nodes.pod)
     channel              = sp.channel
     port                 = sp.port
     sub_port             = sp.sub_port
@@ -702,8 +753,23 @@ module "aci_endpoint_group" {
     deployment_immediacy = sp.deployment_immediacy
     mode                 = sp.mode
   }]
-  vmware_vmm_domains = each.value.vmware_vmm_domains
-  subnets            = each.value.subnets
+  static_endpoints = [for se in lookup(each.value, "static_endpoints", []) : {
+    name           = se.name
+    alias          = se.alias
+    mac            = se.mac
+    ip             = se.ip
+    type           = se.type
+    node_id        = se.node_id
+    node2_id       = se.node2_id == "vpc" ? [for pg in local.leaf_interface_policy_group_mapping : try(pg.node_ids, []) if pg.name == se.channel][0][1] : se.node2_id
+    pod_id         = try(se.pod_id, [for node in try(local.node_policies.nodes, []) : node.pod if node.id == se.node_id][0], local.defaults.apic.node_policies.nodes.pod)
+    channel        = se.channel
+    port           = se.port
+    module         = se.module
+    vlan           = se.vlan
+    additional_ips = se.additional_ips
+  }]
+  l4l7_virtual_ips   = each.value.l4l7_virtual_ips
+  l4l7_address_pools = each.value.l4l7_address_pools
 
   depends_on = [
     module.aci_tenant,

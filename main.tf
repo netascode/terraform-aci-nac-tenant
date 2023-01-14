@@ -230,7 +230,7 @@ locals {
         name  = "${np.name}${local.defaults.apic.tenants.l3outs.node_profiles.name_suffix}"
         nodes = [for node in try(np.nodes, []) : {
           node_id               = node.node_id
-          pod_id                = try(node.pod_id, [for node_ in local.node_policies-nodes : node_.pod if node_.id == node.node_id][0], local.defaults.apic.tenants.l3outs.node_profiles.nodes.pod)
+          pod_id                = try(node.pod_id, [for node_ in local.node_policies.nodes : node_.pod if node_.id == node.node_id][0], local.defaults.apic.tenants.l3outs.node_profiles.nodes.pod)
           router_id             = node.router_id
           router_id_as_loopback = try(node.router_id_as_loopback, local.defaults.apic.tenants.l3outs.node_profiles.nodes.router_id_as_loopback)
           loopback              = try(node.loopback, null)

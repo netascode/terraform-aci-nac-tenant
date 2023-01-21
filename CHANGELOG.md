@@ -24,6 +24,7 @@
 - Add tenant SPAN source group
 - Include default values in module
 - BREAKING CHANGE: `depends_on` can no longer be used to express explicit dependencies between NaC modules. The variable `dependencies` and the output `critical_resources_done` can be used instead, to ensure a certain order of operations.
+- Add `elag`, `active_uplinks_order` and `standby_uplinks` attributes to VMware VMM domain EPG associations
 
 ## 0.3.3
 

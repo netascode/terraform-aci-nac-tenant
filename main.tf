@@ -77,6 +77,9 @@ locals {
           forged_transmits     = try(vmm.forged_transmits, local.defaults.apic.tenants.application_profiles.endpoint_groups.vmware_vmm_domains.forged_transmits) == "accept" ? true : false
           mac_changes          = try(vmm.mac_changes, local.defaults.apic.tenants.application_profiles.endpoint_groups.vmware_vmm_domains.mac_changes) == "accept" ? true : false
           custom_epg_name      = try(vmm.custom_epg_name, "")
+          elag                 = try(vmm.elag, "")
+          active_uplinks_order = try(vmm.active_uplinks_order, "")
+          standby_uplinks      = try(vmm.standby_uplinks, "")
         }]
         static_ports = [for sp in try(epg.static_ports, []) : {
           node_id = try(sp.node_id, [for pg in local.leaf_interface_policy_group_mapping : pg.node_ids if pg.name == sp.channel][0][0], null)
@@ -734,7 +737,7 @@ module "aci_application_profile" {
 
 module "aci_endpoint_group" {
   source  = "netascode/endpoint-group/aci"
-  version = "0.2.5"
+  version = "0.2.6"
 
   for_each                    = { for epg in local.endpoint_groups : epg.key => epg.value if try(local.modules.aci_endpoint_group, true) }
   tenant                      = local.tenant.name

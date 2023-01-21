@@ -1,5 +1,6 @@
 locals {
-  defaults           = try(var.model.defaults, {})
+  user_defaults      = { "defaults" : try(var.model.defaults, {}) }
+  defaults           = lookup(yamldecode(data.utils_yaml_merge.defaults.output), "defaults")
   modules            = try(var.model.modules, {})
   apic               = try(var.model.apic, {})
   access_policies    = try(local.apic.access_policies, {})
@@ -549,6 +550,16 @@ locals {
   }]
 }
 
+data "utils_yaml_merge" "defaults" {
+  input = [file("${path.module}/defaults/defaults.yaml"), yamlencode(local.user_defaults)]
+}
+
+resource "null_resource" "dependencies" {
+  triggers = {
+    dependencies = join(",", var.dependencies)
+  }
+}
+
 module "aci_tenant" {
   source  = "netascode/tenant/aci"
   version = "0.1.0"
@@ -557,6 +568,10 @@ module "aci_tenant" {
   name        = local.tenant.name
   alias       = try(local.tenant.alias, "")
   description = try(local.tenant.description, "")
+
+  depends_on = [
+    null_resource.dependencies,
+  ]
 }
 
 
@@ -642,6 +657,7 @@ module "aci_vrf" {
   }]
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
     module.aci_contract,
     module.aci_imported_contract,
@@ -691,6 +707,7 @@ module "aci_bridge_domain" {
   }]
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
     module.aci_vrf,
     module.aci_l3out,
@@ -710,6 +727,7 @@ module "aci_application_profile" {
   description = try(each.value.description, "")
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant
   ]
 }
@@ -772,6 +790,7 @@ module "aci_endpoint_group" {
   l4l7_address_pools = each.value.l4l7_address_pools
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
     module.aci_application_profile,
     module.aci_bridge_domain,
@@ -803,6 +822,7 @@ module "aci_endpoint_security_group" {
   ip_subnet_selectors         = each.value.ip_subnet_selectors
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
     module.aci_application_profile,
     module.aci_vrf,
@@ -824,6 +844,7 @@ module "aci_inband_endpoint_group" {
   contract_imported_consumers = try([for contract in each.value.contracts.imported_consumers : "${contract}${local.defaults.apic.tenants.imported_contracts.name_suffix}"], [])
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
     module.aci_contract,
     module.aci_imported_contract,
@@ -840,6 +861,7 @@ module "aci_oob_endpoint_group" {
   oob_contract_providers = try([for contract in each.value.oob_contracts.providers : "${contract}${local.defaults.apic.tenants.oob_contracts.name_suffix}"], [])
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
     module.aci_oob_contract,
   ]
@@ -855,6 +877,7 @@ module "aci_oob_external_management_instance" {
   oob_contract_consumers = try([for contract in each.value.oob_contracts.consumers : "${contract}${local.defaults.apic.tenants.oob_contracts.name_suffix}"], [])
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
     module.aci_oob_contract,
   ]
@@ -895,6 +918,7 @@ module "aci_l3out" {
   export_route_map_contexts               = each.value.export_route_map_contexts
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
     module.aci_vrf,
     module.aci_ospf_interface_policy,
@@ -916,6 +940,7 @@ module "aci_l3out_node_profile_manual" {
   bgp_peers = each.value.bgp_peers
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
     module.aci_l3out,
   ]
@@ -933,6 +958,7 @@ module "aci_l3out_node_profile_auto" {
   bgp_peers = each.value.bgp_peers
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
     module.aci_l3out,
   ]
@@ -980,6 +1006,7 @@ module "aci_l3out_interface_profile_manual" {
   }]
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
     module.aci_l3out_node_profile_manual,
   ]
@@ -1027,6 +1054,7 @@ module "aci_l3out_interface_profile_auto" {
   }]
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
     module.aci_l3out_node_profile_auto,
   ]
@@ -1051,6 +1079,7 @@ module "aci_external_endpoint_group" {
   subnets                     = each.value.subnets
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
     module.aci_contract,
     module.aci_imported_contract,
@@ -1080,6 +1109,7 @@ module "aci_filter" {
   }]
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
   ]
 }
@@ -1113,6 +1143,7 @@ module "aci_contract" {
   }]
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
     module.aci_filter,
   ]
@@ -1137,6 +1168,7 @@ module "aci_oob_contract" {
   }]
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
     module.aci_filter,
   ]
@@ -1153,6 +1185,7 @@ module "aci_imported_contract" {
   source_tenant   = each.value.tenant
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
   ]
 }
@@ -1178,6 +1211,7 @@ module "aci_ospf_interface_policy" {
   bfd                     = try(each.value.bfd, local.defaults.apic.tenants.policies.ospf_interface_policies.bfd)
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
   ]
 
@@ -1198,6 +1232,7 @@ module "aci_bgp_timer_policy" {
   stale_interval          = try(each.value.stale_interval, local.defaults.apic.tenants.policies.bgp_timer_policies.stale_interval)
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
   ]
 }
@@ -1219,6 +1254,7 @@ module "aci_bgp_address_family_context_policy" {
   ibgp_max_ecmp          = try(each.value.ibgp_max_ecmp, local.defaults.apic.tenants.policies.bgp_address_family_context_policies.ibgp_max_ecmp)
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
   ]
 
@@ -1243,6 +1279,7 @@ module "aci_dhcp_relay_policy" {
   }]
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
   ]
 
@@ -1259,6 +1296,7 @@ module "aci_dhcp_option_policy" {
   options     = try(each.value.options, [])
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
   ]
 
@@ -1282,6 +1320,7 @@ module "aci_route_control_route_map" {
   }]
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
   ]
 
@@ -1301,6 +1340,7 @@ module "aci_ip_sla_policy" {
   port        = try(each.value.port, local.defaults.apic.tenants.policies.ip_sla_policies.port)
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
   ]
 
@@ -1338,6 +1378,7 @@ module "aci_match_rule" {
   }]
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
   ]
 
@@ -1379,6 +1420,7 @@ module "aci_set_rule" {
   multipath            = try(each.value.multipath, local.defaults.apic.tenants.policies.set_rules.multipath)
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
   ]
 }
@@ -1399,6 +1441,7 @@ module "aci_bfd_interface_policy" {
   min_tx_interval           = try(each.value.min_tx_interval, local.defaults.apic.tenants.policies.bfd_interface_policies.min_tx_interval)
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
   ]
 }
@@ -1432,6 +1475,7 @@ module "aci_qos_policy" {
   ]
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
   ]
 }
@@ -1450,6 +1494,7 @@ module "aci_bgp_peer_prefix_policy" {
   threshold    = try(each.value.threshold, local.defaults.apic.tenants.policies.bgp_peer_prefix_policies.threshold)
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
   ]
 }
@@ -1465,6 +1510,7 @@ module "aci_bgp_best_path_policy" {
   control_type = try(each.value.control_type, local.defaults.apic.tenants.policies.bgp_best_path_policies.control_type)
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
   ]
 }
@@ -1497,6 +1543,7 @@ module "aci_igmp_interface_policy" {
   state_limit_multicast_route_map   = try(each.value.state_limit_multicast_route_map, null) != null ? "${each.value.state_limit_multicast_route_map}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}" : ""
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
   ]
 }
@@ -1519,6 +1566,7 @@ module "aci_igmp_snooping_policy" {
   start_query_interval       = try(each.value.start_query_interval, local.defaults.apic.tenants.policies.igmp_snooping_policies.start_query_interval)
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
   ]
 }
@@ -1544,6 +1592,7 @@ module "aci_pim_policy" {
   join_prune_filter_policy_out = try("${each.value.join_prune_filter_policy_out}${local.defaults.apic.tenants.policies.multicast_route_maps.name_suffix}", "")
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
   ]
 }
@@ -1564,6 +1613,7 @@ module "aci_trust_control_policy" {
   ra             = try(each.value.ra, local.defaults.apic.tenants.policies.trust_control_policies.ra)
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
   ]
 }
@@ -1585,6 +1635,7 @@ module "aci_multicast_route_map" {
   }]
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
   ]
 }
@@ -1630,6 +1681,7 @@ module "aci_l4l7_device" {
   logical_interfaces = each.value.logical_interfaces
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
   ]
 }
@@ -1664,6 +1716,7 @@ module "aci_redirect_policy" {
   }]
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
   ]
 }
@@ -1686,6 +1739,7 @@ module "aci_redirect_backup_policy" {
   }]
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
   ]
 }
@@ -1700,6 +1754,7 @@ module "aci_redirect_health_group" {
   description = try(each.value.description, "")
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
   ]
 }
@@ -1723,6 +1778,7 @@ module "aci_service_graph_template" {
   device_managed      = (length(local.l4l7_devices) != 0 ? [for device in local.l4l7_devices : try(device.managed, []) if device.name == each.value.device.name][0] : false)
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
     module.aci_l4l7_device,
   ]
@@ -1774,6 +1830,7 @@ module "aci_device_selection_policy" {
   provider_custom_qos_policy                              = try("${each.value.provider.custom_qos_policy}${local.defaults.apic.tenants.policies.custom_qos.name_suffix}", "")
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
     module.aci_l4l7_device,
     module.aci_service_graph_template,
@@ -1795,6 +1852,7 @@ module "aci_service_epg_policy" {
   preferred_group = try(each.value.preferred_group, local.defaults.apic.tenants.services.service_epg_policies.preferred_group)
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
   ]
 }
@@ -1820,6 +1878,7 @@ module "aci_tenant_span_destination_group" {
   enforce_version                 = try(each.value.enforce_version, local.defaults.apic.tenants.policies.span.destination_groups.enforce_version)
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
   ]
 }
@@ -1843,6 +1902,12 @@ module "aci_tenant_span_source_group" {
   }]
 
   depends_on = [
+    null_resource.dependencies,
     module.aci_tenant,
   ]
+}
+
+resource "null_resource" "critical_resources_done" {
+  triggers = {
+  }
 }

@@ -1,4 +1,4 @@
-## 0.3.4 (unreleased)
+## 0.4.0 (unreleased)
 
 - Fix VRF leaked internal prefix destination public default value
 - Add BGP peer prefix policy
@@ -22,6 +22,8 @@
 - Add L4L7 address pools to EPGs
 - Add tenant SPAN destination group
 - Add tenant SPAN source group
+- Include default values in module
+- BREAKING CHANGE: `depends_on` can no longer be used to express explicit dependencies between NaC modules. The variable `dependencies` and the output `critical_resources_done` can be used instead, to ensure a certain order of operations.
 
 ## 0.3.3
 

@@ -1,3 +1,7 @@
+## 0.4.1 (unreleased)
+
+- Load default values from `nac-defaults` module
+
 ## 0.4.0
 
 - Fix VRF leaked internal prefix destination public default value

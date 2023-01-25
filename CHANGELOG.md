@@ -1,4 +1,4 @@
-## 0.4.1 (unreleased)
+## 0.4.1
 
 - Fix issue with L3out `next_hop_self` attribute
 

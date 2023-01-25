@@ -1,3 +1,7 @@
+## 0.4.1 (unreleased)
+
+- Fix issue with L3out `next_hop_self` attribute
+
 ## 0.4.0
 
 - Fix VRF leaked internal prefix destination public default value

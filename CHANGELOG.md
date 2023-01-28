@@ -1,3 +1,7 @@
+## 0.4.2 (unreleased)
+
+- Fix conditional creation of `fvUplinkOrderCont` object for EPGs
+
 ## 0.4.1
 
 - Fix issue with L3out `next_hop_self` attribute

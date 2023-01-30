@@ -351,7 +351,7 @@ locals {
           igmp_interface_policy       = try("${ip.igmp_interface_policy}${local.defaults.apic.tenants.policies.igmp_interface_policies.name_suffix}", "")
           qos_class                   = try(ip.qos_class, local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.qos_class)
           custom_qos_policy           = try("${ip.custom_qos_policy}${local.defaults.apic.tenants.policies.custom_qos.name_suffix}", "")
-          interfaces = try(ip.interfaces, null) == null ? null : [for int in ip.interfaces : {
+          interfaces = [for int in try(ip.interfaces, []) : {
             ip           = try(int.ip, "")
             svi          = try(int.svi, local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.svi)
             floating_svi = try(int.floating_svi, local.defaults.apic.tenants.l3outs.node_profiles.interface_profiles.interfaces.floating_svi)

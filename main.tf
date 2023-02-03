@@ -1912,5 +1912,8 @@ module "aci_tenant_span_source_group" {
 
 resource "null_resource" "critical_resources_done" {
   triggers = {
+    dependencies = join(",", concat(
+      values(module.aci_inband_endpoint_group)[*].dn, # Provision inband EPG before node policies, inband node addresses
+    ))
   }
 }

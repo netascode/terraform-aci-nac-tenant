@@ -545,7 +545,7 @@ locals {
       name  = "${lint.name}${local.defaults.apic.tenants.services.l4l7_devices.logical_interfaces.name_suffix}"
       alias = try(lint.alias, null)
       vlan  = try(lint.vlan, null)
-      concrete_interfaces = try(lint.concrete_interfaces, null) == null ? null : [for cint in lint.concrete_interfaces : {
+      concrete_interfaces = [for cint in try(lint.concrete_interfaces, []) : {
         device    = cint.device
         interface = "${cint.interface_name}${local.defaults.apic.tenants.services.l4l7_devices.logical_interfaces.concrete_interfaces.name_suffix}"
       }]
@@ -986,7 +986,7 @@ module "aci_l3out_interface_profile_manual" {
   igmp_interface_policy       = each.value.igmp_interface_policy
   qos_class                   = each.value.qos_class
   custom_qos_policy           = each.value.custom_qos_policy
-  interfaces = each.value.interfaces == null ? null : [for int in try(each.value.interfaces, []) : {
+  interfaces = [for int in try(each.value.interfaces, []) : {
     ip           = int.ip
     svi          = int.svi
     floating_svi = int.floating_svi
@@ -1034,7 +1034,7 @@ module "aci_l3out_interface_profile_auto" {
   igmp_interface_policy       = each.value.igmp_interface_policy
   qos_class                   = each.value.qos_class
   custom_qos_policy           = each.value.custom_qos_policy
-  interfaces = each.value.interfaces == null ? null : [for int in try(each.value.interfaces, []) : {
+  interfaces = [for int in try(each.value.interfaces, []) : {
     ip           = int.ip
     svi          = int.svi
     floating_svi = int.floating_svi

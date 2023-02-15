@@ -3,6 +3,7 @@
 - Make the L3out node profile BGP peer `password` variable sensitive
 - Make the L3out interface profile BGP peer `password` variable sensitive
 - Make the L3out interface profile `ospf_authentication_key` variable sensitive
+- Make the PIM policy `auth_key` variable sensitive
 
 ## 0.4.2
 

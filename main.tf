@@ -1576,7 +1576,7 @@ module "aci_igmp_snooping_policy" {
 
 module "aci_pim_policy" {
   source  = "netascode/pim-policy/aci"
-  version = "0.1.0"
+  version = "0.1.1"
 
   for_each                     = { for pol in try(local.tenant.policies.pim_policies, []) : pol.name => pol if try(local.modules.aci_pim_policy, true) }
   tenant                       = local.tenant.name

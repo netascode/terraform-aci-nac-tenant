@@ -1,7 +1,10 @@
+## 0.4.3 (unreleased)
+
+- Make the L3out node profile BGP peer `password` variable sensitive
+
 ## 0.4.2
 
 - Fix conditional creation of `fvUplinkOrderCont` object for EPGs
-- Make the L3out node profile BGP peer `password` variable sensitive
 
 ## 0.4.1
 

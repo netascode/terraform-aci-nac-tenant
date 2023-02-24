@@ -689,6 +689,7 @@ module "aci_bridge_domain" {
   unicast_routing            = try(each.value.unicast_routing, local.defaults.apic.tenants.bridge_domains.unicast_routing)
   unknown_unicast            = try(each.value.unknown_unicast, local.defaults.apic.tenants.bridge_domains.unknown_unicast)
   unknown_ipv4_multicast     = try(each.value.unknown_ipv4_multicast, local.defaults.apic.tenants.bridge_domains.unknown_ipv4_multicast)
+  unknown_ipv6_multicast     = try(each.value.unknown_ipv6_multicast, local.defaults.apic.tenants.bridge_domains.unknown_ipv6_multicast)
   vrf                        = "${each.value.vrf}${local.defaults.apic.tenants.vrfs.name_suffix}"
   igmp_interface_policy      = try("${each.value.igmp_interface_policy}${local.defaults.apic.tenants.policies.igmp_interface_policies.name_suffix}", "")
   igmp_snooping_policy       = try("${each.value.igmp_snooping_policy}${local.defaults.apic.tenants.policies.igmp_snooping_policies.name_suffix}", "")

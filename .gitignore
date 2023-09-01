@@ -395,3 +395,6 @@ $RECYCLE.BIN/
 *.tfstate
 *.tfstate.backup
 *.tfplan
+
+#MacOS
+.DS_Store

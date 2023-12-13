@@ -584,7 +584,7 @@ module "aci_tenant" {
 
 module "aci_vrf" {
   source  = "netascode/vrf/aci"
-  version = "0.2.3"
+  version = "0.2.4"
 
   for_each                                = { for vrf in try(local.tenant.vrfs, []) : vrf.name => vrf if try(local.modules.aci_vrf, true) }
   tenant                                  = local.tenant.name
@@ -598,6 +598,7 @@ module "aci_vrf" {
   contract_providers                      = try([for contract in each.value.contracts.providers : "${contract}${local.defaults.apic.tenants.contracts.name_suffix}"], [])
   contract_imported_consumers             = try([for contract in each.value.contracts.imported_consumers : "${contract}${local.defaults.apic.tenants.imported_contracts.name_suffix}"], [])
   preferred_group                         = try(each.value.preferred_group, local.defaults.apic.tenants.vrfs.preferred_group)
+  transit_route_tag_policy                = try("${each.value.transit_route_tag_policy}${local.defaults.apic.tenants.policies.transit_route_tag_policies.name_suffix}", "")
   bgp_timer_policy                        = try("${each.value.bgp.timer_policy}${local.defaults.apic.tenants.policies.bgp_timer_policies.name_suffix}", "")
   bgp_ipv4_address_family_context_policy  = try("${each.value.bgp.ipv4_address_family_context_policy}${local.defaults.apic.tenants.policies.bgp_address_family_context_policies.name_suffix}", "")
   bgp_ipv6_address_family_context_policy  = try("${each.value.bgp.ipv6_address_family_context_policy}${local.defaults.apic.tenants.policies.bgp_address_family_context_policies.name_suffix}", "")
@@ -1618,6 +1619,22 @@ module "aci_trust_control_policy" {
   arp            = try(each.value.arp, local.defaults.apic.tenants.policies.trust_control_policies.arp)
   nd             = try(each.value.nd, local.defaults.apic.tenants.policies.trust_control_policies.nd)
   ra             = try(each.value.ra, local.defaults.apic.tenants.policies.trust_control_policies.ra)
+
+  depends_on = [
+    null_resource.dependencies,
+    module.aci_tenant,
+  ]
+}
+
+module "aci_route_tag_policy" {
+  source  = "netascode/route-tag-policy/aci"
+  version = "0.1.0"
+
+  for_each       = { for pol in try(local.tenant.policies.route_tag_policies, []) : pol.name => pol if try(local.modules.aci_route_tag_policy, true) }
+  tenant         = local.tenant.name
+  name           = "${each.value.name}${local.defaults.apic.tenants.policies.route_tag_policies.name_suffix}"
+  description    = try(each.value.description, "")
+  tag = try(each.value.tag, local.defaults.apic.tenants.policies.route_tag_policies.tag)
 
   depends_on = [
     null_resource.dependencies,

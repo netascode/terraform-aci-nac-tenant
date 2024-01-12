@@ -1078,6 +1078,8 @@ defaults:
           arp: false
           nd: false
           ra: false
+        transit_route_tag_policies:
+          name_suffix: ""
         span:
           source_groups:
             name_suffix: ""
